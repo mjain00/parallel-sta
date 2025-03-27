@@ -115,7 +115,7 @@ The platform chosen for this project is a **multi-core CPU environment** using *
 
 **OpenMP** will allow us to dynamically allocate tasks to different threads and define dependencies between the data. This provides a flexible and efficient way to handle the parallelization of the STA algorithm.
 
-## schedule
+## Schedule
 
 | Week | Dates       | Tasks                                                                 |
 |------|-------------|-----------------------------------------------------------------------|
