@@ -114,3 +114,14 @@ Our performance goals focus on **speedup**, **scalability**, **efficiency**, and
 The platform chosen for this project is a **multi-core CPU environment** using **OpenMP**. This setup uses a **shared address space**, which is advantageous due to the expected high level of communication and data sharing between tasks. While careful synchronization is necessary, this approach is more efficient than using a distributed memory model in this scenario.  
 
 **OpenMP** will allow us to dynamically allocate tasks to different threads and define dependencies between the data. This provides a flexible and efficient way to handle the parallelization of the STA algorithm.
+
+## schedule
+
+| Week | Dates       | Tasks                                                                 |
+|------|-------------|-----------------------------------------------------------------------|
+| 0    | 3/24 - 3/30 | Plan the outline of the project. <br> Set up repository and gather data. |
+| 1    | 3/31 - 4/6  | Get sequential code running. <br> Benchmark the sequential algorithm.  |
+| 2    | 4/7 - 4/13  | Implement parallel static time analysis using **OpenMP** - part 1 from paper. <br> Run experiments to analyze performance. <br> Complete Milestone report. |
+| 3    | 4/14 - 4/20 | Implement the timing updates using task graphs - overcoming synchronization challenges posed by OpenMP - part 2 from paper. |
+| 4    | 4/21 - 4/27 | Stretch goal: Implement the **CPU-parallel partitioning algorithm** - algorithm from paper. <br> Realistic goal: Complete the task graph implementation. |
+| 5    | 4/28 - 5/2  | Final Poster Session. |
