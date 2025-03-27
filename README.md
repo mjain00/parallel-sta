@@ -74,3 +74,43 @@ Given that we will be using a **shared memory system**, we need to ensure that u
 
 - **Starter Code:**  
   We will use the **OpenTimer** library as inspiration for the sequential version of the code. This open-source implementation is based on a different paper but provides a useful reference for our project.
+
+
+## Goals & Deliverables
+
+### Plan to Achieve:  
+In this project, our team plans to significantly speed up the **STA algorithm** by finding avenues of parallelism. Similar to the assignments in class, there are multiple ways to parallelize this algorithm, and we want to experiment with these techniques. We aim to build on each iteration of our parallel algorithm to explore the tradeoffs between performance and accuracy.  
+
+To begin, we should have a robust **sequential code** working that traverses paths and finds any timing violations. Then, our team plans to work on at least two separate algorithms:  
+
+1. **OpenMP**  
+   We want to create a graph that can parallelize independent paths (paths with no dependencies). This involves creating tasks using **BFS**, going down the branches to calculate time for previous layers, using a synchronization barrier, and parallelizing the next components.  
+
+2. **Task Graph Parallelism**  
+   Building on OpenMP, we want to create a task graph where the **nodes** represent tasks and the **edges** represent dependencies. This approach eliminates the need for synchronization barriers by using a task queue where processors will steal tasks that are ready. While we can’t give a specific speedup, we expect better performance by avoiding the iterative wait for previous tasks to complete.
+
+### Hope to Achieve:  
+In addition to the above methods, we plan to explore the following:  
+
+- **MPI**: Use **MPI** to communicate components or paths that are shared. This will involve heavy synchronization and is a tradeoff we need to explore.  
+- **CUDA Kernel**: Investigate the creation of a **CUDA kernel** that performs **STA** and explore avenues for speedup to determine if more processors result in a greater speedup.  
+- **Clusters of Tasks Parallelism**: Partition the circuit to create clusters of similar, independent tasks. The research paper suggests that small, insignificant paths incur overhead, so it’s important to cluster tasks efficiently for computational efficiency.
+
+### What We Hope to Learn:  
+From this project, we want to understand how the **STA algorithm’s performance** can be improved using different parallelization techniques. Our team will explore the potential benefits of parallelism for large circuits and investigate which methods provide the best speedup.  
+
+The project will compare our **OpenMP parallel implementation**, **Graph Parallelism**, and other algorithms, investigating the tradeoffs between performance and the overhead of each technique. Additionally, we aim to determine the scalability of these techniques. Some key questions we want answered include:
+
+- Do some circuits have better performance with the sequential algorithm due to overhead?
+- Is parallelization more efficient for larger circuits?
+- How does slack impact performance? How does problem size affect synchronization and overhead?
+- How does parallelism impact correctness in STA? What are the bottlenecks?
+- How can we create a task graph that considers data dependencies?
+
+Our performance goals focus on **speedup**, **scalability**, **efficiency**, and **correctness**, and we will analyze the tradeoffs for each strategy.
+
+## Platform Choice
+
+The platform chosen for this project is a **multi-core CPU environment** using **OpenMP**. This setup uses a **shared address space**, which is advantageous due to the expected high level of communication and data sharing between tasks. While careful synchronization is necessary, this approach is more efficient than using a distributed memory model in this scenario.  
+
+**OpenMP** will allow us to dynamically allocate tasks to different threads and define dependencies between the data. This provides a flexible and efficient way to handle the parallelization of the STA algorithm.
