@@ -51,3 +51,71 @@ void DAG::buildFromASIC(const ASIC& asic) {
 }
 
 
+
+std::vector<int> DAG::topologicalSort() const {
+    std::unordered_map<int, int> inDegree;
+    std::unordered_map<int, int> delay;  // Store delay of each node
+    std::vector<int> result;
+    std::queue<int> q;
+
+    std::cout << "\n=== Step 1: Calculating in-degrees ===\n";
+    for (const auto& node : adjList) {
+        if (inDegree.find(node.first) == inDegree.end()) {
+            inDegree[node.first] = 0;
+        }
+        for (int neighbor : node.second) {
+            inDegree[neighbor]++;
+            std::cout << "Edge: " << node.first << " -> " << neighbor 
+                      << " | Incrementing in-degree of " << neighbor 
+                      << " to " << inDegree[neighbor] << "\n";
+        }
+    }
+
+    std::cout << "\n=== Step 2: Enqueuing in-degree 0 nodes ===\n";
+    for (const auto& node : inDegree) {
+        if (node.second == 0) {
+            q.push(node.first);
+            delay[node.first] = 0;
+            std::cout << "Enqueued node " << node.first 
+                      << " with in-degree 0, initial delay = 0\n";
+        }
+    }
+
+    std::cout << "\n=== Step 3: Processing queue ===\n";
+    while (!q.empty()) {
+        int current = q.front();
+        q.pop();
+        result.push_back(current);
+
+        std::cout << "\nProcessing node " << current 
+                  << " with current accumulated delay = " << delay[current] << "\n";
+
+        for (int neighbor : adjList.at(current)) {
+            inDegree[neighbor]--;
+            int oldDelay = delay[neighbor];
+            delay[neighbor] = std::max(delay[neighbor], delay[current] + 1);
+
+            std::cout << "  -> Visiting neighbor " << neighbor
+                      << ", decremented in-degree to " << inDegree[neighbor] << "\n";
+            std::cout << "     Delay update: max(" << oldDelay << ", " 
+                      << delay[current] << " + 1) = " << delay[neighbor] << "\n";
+
+            if (inDegree[neighbor] == 0) {
+                q.push(neighbor);
+                std::cout << "     Enqueued " << neighbor << " (now in-degree 0)\n";
+            }
+        }
+    }
+
+    if (result.size() != inDegree.size()) {
+        std::cerr << "\nError: Graph has a cycle!\n";
+        return {};
+    }
+
+    std::cout << "\n=== Final Topological Order and Delays ===\n";
+    for (int node : result) {
+        std::cout << "Node " << node << " | Accumulated delay: " << delay[node] << "\n";
+    }
+
+    return result;
+}

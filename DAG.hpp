@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <map>
+#include <queue>
+
 #include "ASIC.hpp"  // Ensure Cell.hpp is defined correctly.
 
 class DAG {
@@ -18,6 +20,8 @@ public:
 
     // Builds the DAG based on the provided ASIC object
     void buildFromASIC(const ASIC& asic);
+    std::vector<int> topologicalSort() const;
+
 };
 
 #endif // DAG_HPP
