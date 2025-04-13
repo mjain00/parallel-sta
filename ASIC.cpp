@@ -52,18 +52,9 @@ void display_asic(const ASIC &asic)
     cout << endl;
 
     cout << "Net Mappings:" << endl;
-    // NEED TO CHECK
     for (const auto &pair : asic.net_dict)
     {
-        cout << "[" << pair.first << "] -> ";
-        const Cell &cell = pair.second;
-        cout << "Type: " << static_cast<int>(cell.type) << " Inputs: ";
-        for (const auto &input : cell.inputs)
-            cout << input << " ";
-        cout << "Outputs: ";
-        for (const auto &output : cell.outputs)
-            cout << output << " ";
-        cout << endl;
+        cout << "[" << pair.first << "] -> " << pair.second << endl;
     }
 }
 
@@ -137,52 +128,56 @@ ASIC parse_json(const string &filename)
             new_cell.type = type;
             new_cell.delay = get_delay(new_cell.type);
 
-            for (auto &connection : cell["connections"])
+            for (auto &[connection, bits] : cell["connections"].items())
             {
                 if (cell["port_directions"][connection] == "input")
                 {
-                    for (auto &bit : cell["connections"][connection])
+                    for (auto &bit : bits)
                     {
+                        int bit_val = bit.get<int>();
                         if (type != CellType::DFF_P || connection != "C")
                         {
-                            new_cell.inputs.push_back(bit);
+                            new_cell.inputs.push_back(bit_val);
                         }
                         else
                         {
-                            clock = (int)bit;
+                            clock = bit_val;
                         }
                     }
                 }
                 else
                 {
-                    for (auto &bit : cell["connections"][connection])
+                    for (auto &bit : bits)
                     {
-                        new_cell.outputs.push_back(bit);
+                        int bit_val = bit.get<int>();
+                        new_cell.outputs.push_back(bit_val);
                     }
                 }
             }
 
-            netlist.push_back(new_cell);
+            asic.cells.push_back(new_cell);
         }
         auto &port_dict = data["modules"][top_name]["ports"];
 
-        for (auto &port : port_dict)
+        for (auto &[port_name, port_details] : port_dict.items())
         {
-            if (port["direction"] == "input")
+            if (port_details["direction"] == "input")
             {
-                for (auto &bit : port["bits"])
+                for (auto &bit : port_details["bits"])
                 {
-                    if (int(bit) != clock)
+                    int bit_val = bit.get<int>();
+                    if (bit_val != clock)
                     {
-                        asic.inputs.push_back(bit);
+                        asic.inputs.push_back(bit_val);
                     }
                 }
             }
             else
             {
-                for (auto &bit : port["bits"])
+                for (auto &bit : port_details["bits"])
                 {
-                    asic.outputs.push_back(bit);
+                    int bit_val = bit.get<int>();
+                    asic.outputs.push_back(bit_val);
                 }
             }
         }

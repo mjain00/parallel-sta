@@ -8,6 +8,6 @@ typedef struct
 {
     double delay;
     CellType type;
-    vector<string> inputs;
-    vector<string> outputs;
+    vector<int> inputs;
+    vector<int> outputs;
 } Cell;

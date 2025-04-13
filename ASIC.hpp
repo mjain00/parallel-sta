@@ -8,10 +8,10 @@ using namespace std;
 
 typedef struct
 {
-    vector<string> inputs;
-    vector<string> outputs;
+    vector<int> inputs;
+    vector<int> outputs;
     vector<Cell> cells;
-    map<string, Cell> net_dict;
+    map<int, string> net_dict;
     vector<string> paths;
 } ASIC;
 
