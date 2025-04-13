@@ -13,5 +13,7 @@ int main()
     // parse json file
     std::cout << "Hello World!" << std::endl;
     ASIC asic = parse_json("simple.json");
+    std::cout << "Printing parsed cells:\n";
+    print_cells(asic);  
     std::cout << "BYE!" << std::endl;
 }

@@ -6,66 +6,66 @@
 using namespace std;
 using json = nlohmann::json;
 
-void display_asic(const ASIC &asic)
-{
-    cout << "ASIC Details:" << endl;
+// void display_asic(const ASIC &asic)
+// {
+//     cout << "ASIC Details:" << endl;
 
-    cout << "Cell List:" << endl;
+//     cout << "Cell List:" << endl;
 
-    for (const auto &cell : asic.cells)
-    {
-        cout << "Cell Type: " << static_cast<int>(cell.type) << endl;
-        cout << "Delay: " << cell.delay << endl;
-        cout << "Inputs: ";
-        for (const auto &input : cell.inputs)
-        {
-            cout << input << " ";
-        }
-        cout << endl;
-        cout << "Outputs: ";
-        for (const auto &output : cell.outputs)
-        {
-            cout << output << " ";
-        }
-        cout << endl;
-    }
+//     for (const auto &cell : asic.cells)
+//     {
+//         cout << "Cell Type: " << static_cast<int>(cell.type) << endl;
+//         cout << "Delay: " << cell.delay << endl;
+//         cout << "Inputs: ";
+//         for (const auto &input : cell.inputs)
+//         {
+//             cout << input << " ";
+//         }
+//         cout << endl;
+//         cout << "Outputs: ";
+//         for (const auto &output : cell.outputs)
+//         {
+//             cout << output << " ";
+//         }
+//         cout << endl;
+//     }
 
-    cout << "IO list:" << endl;
-    cout << "Inputs: ";
-    for (const auto &input : asic.inputs)
-    {
-        cout << input << " ";
-    }
-    cout << endl;
-    cout << "Outputs: ";
-    for (const auto &output : asic.outputs)
-    {
-        cout << output << " ";
-    }
-    cout << endl;
+//     cout << "IO list:" << endl;
+//     cout << "Inputs: ";
+//     for (const auto &input : asic.inputs)
+//     {
+//         cout << input << " ";
+//     }
+//     cout << endl;
+//     cout << "Outputs: ";
+//     for (const auto &output : asic.outputs)
+//     {
+//         cout << output << " ";
+//     }
+//     cout << endl;
 
-    cout << "Paths: ";
-    for (const auto &path : asic.paths)
-    {
-        cout << path << " ";
-    }
-    cout << endl;
+//     cout << "Paths: ";
+//     for (const auto &path : asic.paths)
+//     {
+//         cout << path << " ";
+//     }
+//     cout << endl;
 
-    cout << "Net Mappings:" << endl;
-    // NEED TO CHECK
-    for (const auto &pair : asic.net_dict)
-    {
-        cout << "[" << pair.first << "] -> ";
-        const Cell &cell = pair.second;
-        cout << "Type: " << static_cast<int>(cell.type) << " Inputs: ";
-        for (const auto &input : cell.inputs)
-            cout << input << " ";
-        cout << "Outputs: ";
-        for (const auto &output : cell.outputs)
-            cout << output << " ";
-        cout << endl;
-    }
-}
+//     cout << "Net Mappings:" << endl;
+//     // NEED TO CHECK
+//     for (const auto &pair : asic.net_dict)
+//     {
+//         cout << "[" << pair.first << "] -> ";
+//         const Cell &cell = pair.second;
+//         cout << "Type: " << static_cast<int>(cell.type) << " Inputs: ";
+//         for (const auto &input : cell.inputs)
+//             cout << input << " ";
+//         cout << "Outputs: ";
+//         for (const auto &output : cell.outputs)
+//             cout << output << " ";
+//         cout << endl;
+//     }
+// }
 
 CellType parse_cell_type(const std::string &type_str)
 {
@@ -113,13 +113,40 @@ int get_delay(CellType type)
     }
 }
 
+
+void print_cells(const ASIC &asic)
+{
+    int cell_index = 0;
+    for (const auto &cell : asic.netlist)
+    {
+        std::cout << "Cell " << cell_index++ << ":\n";
+        std::cout << "  Type: " << static_cast<int>(cell.type) << "\n";
+        std::cout << "  Delay: " << cell.delay << "\n";
+
+
+        std::cout << "  Inputs: ";
+        for (auto in : cell.inputs)
+        {
+            std::cout << in << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "  Outputs: ";
+        for (auto out : cell.outputs)
+        {
+            std::cout << out << " ";
+        }
+        std::cout << "\n\n";
+    }
+}
+
+
 ASIC parse_json(const string &filename)
 {
     ASIC asic;
 
     ifstream file(filename);
     json data;
-
     file >> data;
 
     int clock = -1;
@@ -127,7 +154,6 @@ ASIC parse_json(const string &filename)
     for (auto &[top_name, module_data] : data["modules"].items())
     {
         auto &cell_dict = module_data["cells"];
-
         vector<Cell> netlist;
 
         for (const auto &cell : cell_dict)
@@ -137,13 +163,16 @@ ASIC parse_json(const string &filename)
             new_cell.type = type;
             new_cell.delay = get_delay(new_cell.type);
 
-            for (auto &connection : cell["connections"])
+            for (auto &connection : cell["connections"].items())
             {
-                if (cell["port_directions"][connection] == "input")
+                const string &port = connection.key();
+                const json &bits = connection.value();
+
+                if (cell["port_directions"].contains(port) && cell["port_directions"][port] == "input")
                 {
-                    for (auto &bit : cell["connections"][connection])
+                    for (auto &bit : bits)
                     {
-                        if (type != CellType::DFF_P || connection != "C")
+                        if (type != CellType::DFF_P || port != "C")
                         {
                             new_cell.inputs.push_back(bit);
                         }
@@ -155,7 +184,7 @@ ASIC parse_json(const string &filename)
                 }
                 else
                 {
-                    for (auto &bit : cell["connections"][connection])
+                    for (auto &bit : bits)
                     {
                         new_cell.outputs.push_back(bit);
                     }
@@ -164,46 +193,105 @@ ASIC parse_json(const string &filename)
 
             netlist.push_back(new_cell);
         }
-        auto &port_dict = data["modules"][top_name]["ports"];
 
-        for (auto &port : port_dict)
-        {
-            if (port["direction"] == "input")
-            {
-                for (auto &bit : port["bits"])
-                {
-                    if (int(bit) != clock)
-                    {
-                        asic.inputs.push_back(bit);
-                    }
-                }
-            }
-            else
-            {
-                for (auto &bit : port["bits"])
-                {
-                    asic.outputs.push_back(bit);
-                }
-            }
-        }
-
-        auto &net_names = data["modules"][top_name]["netnames"];
-
-        for (auto &[net_name, net_info] : net_names.items())
-        {
-            auto &bit_list = net_info["bits"];
-            for (int i = 0; i < bit_list.size(); i++)
-            {
-                if (bit_list.size() == 1)
-                {
-                    asic.net_dict[bit_list[i]] = net_name;
-                }
-                else
-                {
-                    asic.net_dict[bit_list[i]] = net_name + "[" + to_string(i) + "]";
-                }
-            }
-        }
+        asic.netlist = netlist; // store in ASIC struct
     }
+
     return asic;
 }
+
+
+// ASIC parse_json(const string &filename)
+// {
+//     ASIC asic;
+
+//     ifstream file(filename);
+//     json data;
+
+//     file >> data;
+
+//     int clock = -1;
+
+//     for (auto &[top_name, module_data] : data["modules"].items())
+//     {
+//         auto &cell_dict = module_data["cells"];
+
+//         vector<Cell> netlist;
+
+//         for (const auto &cell : cell_dict)
+//         {
+//             Cell new_cell;
+//             CellType type = parse_cell_type(cell["type"]);
+//             new_cell.type = type;
+//             new_cell.delay = get_delay(new_cell.type);
+
+//             for (auto &connection : cell["connections"])
+//             {
+//                 if (cell["port_directions"][connection] == "input")
+//                 {
+//                     for (auto &bit : cell["connections"][connection])
+//                     {
+//                         if (type != CellType::DFF_P || connection != "C")
+//                         {
+//                             new_cell.inputs.push_back(bit);
+//                         }
+//                         else
+//                         {
+//                             clock = (int)bit;
+//                         }
+//                     }
+//                 }
+//                 else
+//                 {
+//                     for (auto &bit : cell["connections"][connection])
+//                     {
+//                         new_cell.outputs.push_back(bit);
+//                     }
+//                 }
+//             }
+
+//             netlist.push_back(new_cell);
+//         }
+//         // auto &port_dict = data["modules"][top_name]["ports"];
+
+//         // for (auto &port : port_dict)
+//         // {
+//         //     if (port["direction"] == "input")
+//         //     {
+//         //         for (auto &bit : port["bits"])
+//         //         {
+//         //             if (int(bit) != clock)
+//         //             {
+//         //                 asic.inputs.push_back(bit);
+//         //             }
+//         //         }
+//         //     }
+//         //     else
+//         //     {
+//         //         for (auto &bit : port["bits"])
+//         //         {
+//         //             asic.outputs.push_back(bit);
+//         //         }
+//         //     }
+//         // }
+
+//         // auto &net_names = data["modules"][top_name]["netnames"];
+
+//         // for (auto &[net_name, net_info] : net_names.items())
+//         // {
+//         //     auto &bit_list = net_info["bits"];
+//         //     for (int i = 0; i < bit_list.size(); i++)
+//         //     {
+//         //         if (bit_list.size() == 1)
+//         //         {
+//         //             asic.net_dict[bit_list[i]] = net_name;
+//         //         }
+//         //         else
+//         //         {
+//         //             asic.net_dict[bit_list[i]] = net_name + "[" + to_string(i) + "]";
+//         //         }
+//         //     }
+//         // }
+//     }
+//     return asic;
+// }
