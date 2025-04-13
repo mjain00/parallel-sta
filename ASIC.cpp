@@ -124,9 +124,9 @@ ASIC parse_json(const string &filename)
 
     int clock = -1;
 
-    for (&auto top_name : data["modules"])
+    for (auto &[top_name, module_data] : data["modules"].items())
     {
-        &auto cell_dict = top_name["cells"];
+        auto &cell_dict = module_data["cells"];
 
         vector<Cell> netlist;
 
@@ -137,18 +137,15 @@ ASIC parse_json(const string &filename)
             new_cell.type = type;
             new_cell.delay = get_delay(new_cell.type);
 
-            vector<string> inputs;
-            vector<string> outputs;
-
-            for (&auto connection : cell["connections"])
+            for (auto &connection : cell["connections"])
             {
                 if (cell["port_directions"][connection] == "input")
                 {
-                    for (&auto bit : cell["connections"][connection])
+                    for (auto &bit : cell["connections"][connection])
                     {
                         if (type != CellType::DFF_P || connection != "C")
                         {
-                            inputs.push_back(bit);
+                            new_cell.inputs.push_back(bit);
                         }
                         else
                         {
@@ -158,39 +155,55 @@ ASIC parse_json(const string &filename)
                 }
                 else
                 {
-                    for (&auto bit : cell["connections"][connection])
+                    for (auto &bit : cell["connections"][connection])
                     {
-                        outputs.append(bit);
+                        new_cell.outputs.push_back(bit);
                     }
                 }
             }
 
             netlist.push_back(new_cell);
         }
-        &auto port_dict = data["modules"][top_name]["ports"];
+        auto &port_dict = data["modules"][top_name]["ports"];
 
-        vector<string> asic_inputs;
-        vector<string> asic_outputs;
-
-        for (&auto port : port_dict)
+        for (auto &port : port_dict)
         {
             if (port["direction"] == "input")
             {
-                for (&auto bit : port["bits"])
+                for (auto &bit : port["bits"])
                 {
                     if (int(bit) != clock)
                     {
-                        asic_inputs.push_back(bit);
+                        asic.inputs.push_back(bit);
                     }
                 }
             }
             else
             {
-                for (&auto bit : port["bits"])
+                for (auto &bit : port["bits"])
                 {
-                    asic_outputs.push_back(bit);
+                    asic.outputs.push_back(bit);
+                }
+            }
+        }
+
+        auto &net_names = data["modules"][top_name]["netnames"];
+
+        for (auto &[net_name, net_info] : net_names.items())
+        {
+            auto &bit_list = net_info["bits"];
+            for (int i = 0; i < bit_list.size(); i++)
+            {
+                if (bit_list.size() == 1)
+                {
+                    asic.net_dict[bit_list[i]] = net_name;
+                }
+                else
+                {
+                    asic.net_dict[bit_list[i]] = net_name + "[" + to_string(i) + "]";
                 }
             }
         }
     }
+    return asic;
 }

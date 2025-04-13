@@ -1,2 +1,2 @@
 all:
-	g++ ASIC.cpp -o sta
+	g++ ASIC.cpp sta_starter.cpp -o sta.o

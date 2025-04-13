@@ -16,3 +16,4 @@ typedef struct
 } ASIC;
 
 void display_asic(const ASIC &asic);
+ASIC parse_json(const string &filename);
