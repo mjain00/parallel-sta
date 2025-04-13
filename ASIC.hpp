@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "json.hpp"
+#include "external/json/json.hpp"
 #include "Cell.hpp"
 using namespace std;
 

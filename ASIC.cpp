@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "json.hpp"
 #include "ASIC.hpp"
 using namespace std;
 using json = nlohmann::json;

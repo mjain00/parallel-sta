@@ -1,6 +1,5 @@
 #include <vector>
 #include <string>
-#include "ASIC.h"
 #include "CellType.hpp"
 
 using namespace std;
