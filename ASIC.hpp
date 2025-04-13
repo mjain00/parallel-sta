@@ -4,6 +4,7 @@
 #include <map>
 #include "external/json/json.hpp"
 #include "Cell.hpp"
+
 using namespace std;
 
 typedef struct
