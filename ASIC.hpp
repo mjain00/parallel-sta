@@ -10,9 +10,9 @@ typedef struct
 {
     vector<int> inputs;
     vector<int> outputs;
-    vector<Cell> netlist;
+    vector<Cell> cells;
     map<int, string> net_dict;
-    // vector<string> paths; //come back to this 
+    vector<string> paths;
 } ASIC;
 
 void display_asic(const ASIC &asic);

@@ -51,21 +51,12 @@ using json = nlohmann::json;
 //     }
 //     cout << endl;
 
-//     cout << "Net Mappings:" << endl;
-//     // NEED TO CHECK
-//     for (const auto &pair : asic.net_dict)
-//     {
-//         cout << "[" << pair.first << "] -> ";
-//         const Cell &cell = pair.second;
-//         cout << "Type: " << static_cast<int>(cell.type) << " Inputs: ";
-//         for (const auto &input : cell.inputs)
-//             cout << input << " ";
-//         cout << "Outputs: ";
-//         for (const auto &output : cell.outputs)
-//             cout << output << " ";
-//         cout << endl;
-//     }
-// }
+    cout << "Net Mappings:" << endl;
+    for (const auto &pair : asic.net_dict)
+    {
+        cout << "[" << pair.first << "] -> " << pair.second << endl;
+    }
+}
 
 CellType parse_cell_type(const std::string &type_str)
 {
@@ -163,7 +154,7 @@ ASIC parse_json(const string &filename)
             new_cell.type = type;
             new_cell.delay = get_delay(new_cell.type);
 
-            for (auto &connection : cell["connections"].items())
+            for (auto &[connection, bits] : cell["connections"].items())
             {
                 const string &port = connection.key();
                 const json &bits = connection.value();
@@ -172,13 +163,14 @@ ASIC parse_json(const string &filename)
                 {
                     for (auto &bit : bits)
                     {
-                        if (type != CellType::DFF_P || port != "C")
+                        int bit_val = bit.get<int>();
+                        if (type != CellType::DFF_P || connection != "C")
                         {
-                            new_cell.inputs.push_back(bit);
+                            new_cell.inputs.push_back(bit_val);
                         }
                         else
                         {
-                            clock = (int)bit;
+                            clock = bit_val;
                         }
                     }
                 }
@@ -186,15 +178,55 @@ ASIC parse_json(const string &filename)
                 {
                     for (auto &bit : bits)
                     {
-                        new_cell.outputs.push_back(bit);
+                        int bit_val = bit.get<int>();
+                        new_cell.outputs.push_back(bit_val);
                     }
                 }
             }
 
-            netlist.push_back(new_cell);
+            asic.cells.push_back(new_cell);
         }
 
-        asic.netlist = netlist; // store in ASIC struct
+        for (auto &[port_name, port_details] : port_dict.items())
+        {
+            if (port_details["direction"] == "input")
+            {
+                for (auto &bit : port_details["bits"])
+                {
+                    int bit_val = bit.get<int>();
+                    if (bit_val != clock)
+                    {
+                        asic.inputs.push_back(bit_val);
+                    }
+                }
+            }
+            else
+            {
+                for (auto &bit : port_details["bits"])
+                {
+                    int bit_val = bit.get<int>();
+                    asic.outputs.push_back(bit_val);
+                }
+            }
+        }
+
+        auto &net_names = data["modules"][top_name]["netnames"];
+
+        for (auto &[net_name, net_info] : net_names.items())
+        {
+            auto &bit_list = net_info["bits"];
+            for (int i = 0; i < bit_list.size(); i++)
+            {
+                if (bit_list.size() == 1)
+                {
+                    asic.net_dict[bit_list[i]] = net_name;
+                }
+                else
+                {
+                    asic.net_dict[bit_list[i]] = net_name + "[" + to_string(i) + "]";
+                }
+            }
+        }
     }
 
     return asic;
