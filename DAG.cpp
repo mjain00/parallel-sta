@@ -45,15 +45,12 @@ void DAG::buildFromASIC(const ASIC& asic) {
         for (const auto& input : cell.inputs) {
             for (const auto& output : cell.outputs) {
                 addEdge(input, output);  // Create edges based on the cell's inputs and outputs
-                netToCell[output] = cell.id;
             }
         }
     }
 }
 
-
-
-std::vector<int> DAG::topologicalSort(const ASIC& asic) {
+std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map) {
     std::unordered_map<int, int> inDegree;
     std::unordered_map<int, int> delay;  // Store delay of each node
     std::vector<int> result;
@@ -95,16 +92,20 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic) {
                 inDegree[neighbor]--;
                 int oldDelay = delay[neighbor];
                 int cellDelay = 0;
-                if (netToCell.count(neighbor)) {
-                    int cellId = netToCell[neighbor];
-                    cellDelay = asic.cells[cellId].delay;
+                
+                // Check if the neighbor exists in the cell_map
+                if (cell_map.count(neighbor)) {
+                    // If the node exists in cell_map, accumulate the delay
+                    cellDelay = cell_map.at(neighbor).delay;  // Assuming 'delay' is a property of the Cell
                 }
+
+                // Update the delay based on the current node's delay + the cell delay (if any)
                 delay[neighbor] = std::max(delay[neighbor], delay[current] + cellDelay);
     
                 std::cout << "  -> Visiting neighbor " << neighbor
                           << ", decremented in-degree to " << inDegree[neighbor] << "\n";
                 std::cout << "     Delay update: max(" << oldDelay << ", " 
-                          << delay[current] << " + 1) = " << delay[neighbor] << "\n";
+                          << delay[current] << " + " << cellDelay << ") = " << delay[neighbor] << "\n";
     
                 if (inDegree[neighbor] == 0) {
                     q.push(neighbor);

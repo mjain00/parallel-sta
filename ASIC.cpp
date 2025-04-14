@@ -59,6 +59,15 @@ void display_asic(const ASIC &asic)
     }
 }
 
+map<int, Cell> create_cell_map(const vector<Cell>& cells) {
+    map<int, Cell> cell_map;
+    for (const auto& cell : cells) {
+        cell_map[cell.id] = cell;
+    }
+    return cell_map;
+}
+
+
 CellType parse_cell_type(const std::string &type_str)
 {
     if (type_str == "$_NOT_")
@@ -99,7 +108,7 @@ int get_delay(CellType type)
     case CellType::XNOR:
         return 12;
     case CellType::DFF_P:
-        return -1; // Or any special value
+        return 0; // Or any special value
     default:
         return 0;
     }

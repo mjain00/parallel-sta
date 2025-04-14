@@ -21,8 +21,7 @@ public:
 
     // Builds the DAG based on the provided ASIC object
     void buildFromASIC(const ASIC& asic);
-    std::vector<int> topologicalSort(const ASIC& asic);
-
+    std::vector<int> topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map);
 };
 
 #endif // DAG_HPP
