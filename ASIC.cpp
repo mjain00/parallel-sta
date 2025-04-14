@@ -119,7 +119,6 @@ ASIC parse_json(const string &filename)
     for (auto &[top_name, module_data] : data["modules"].items())
     {
         auto &cell_dict = module_data["cells"];
-
         vector<Cell> netlist;
 
         for (const auto &cell : cell_dict)
@@ -128,6 +127,8 @@ ASIC parse_json(const string &filename)
             CellType type = parse_cell_type(cell["type"]);
             new_cell.type = type;
             new_cell.delay = get_delay(new_cell.type);
+
+            vector<int> output_bits;
 
             for (auto &[connection, bits] : cell["connections"].items())
             {
@@ -146,20 +147,31 @@ ASIC parse_json(const string &filename)
                         }
                     }
                 }
-                else
+                else // output
                 {
                     for (auto &bit : bits)
                     {
                         int bit_val = bit.get<int>();
                         new_cell.outputs.push_back(bit_val);
+                        output_bits.push_back(bit_val);
                     }
                 }
             }
-            new_cell.id = asic.cells.size();
+
+            // Set cell.id to the output bit number (use first one if multiple)
+            if (!output_bits.empty())
+            {
+                new_cell.id = output_bits[0]; // or handle multiple outputs as needed
+            }
+            else
+            {
+                new_cell.id = -1; // fallback if no output
+            }
+
             asic.cells.push_back(new_cell);
         }
-        auto &port_dict = data["modules"][top_name]["ports"];
 
+        auto &port_dict = data["modules"][top_name]["ports"];
         for (auto &[port_name, port_details] : port_dict.items())
         {
             if (port_details["direction"] == "input")
@@ -184,7 +196,6 @@ ASIC parse_json(const string &filename)
         }
 
         auto &net_names = data["modules"][top_name]["netnames"];
-
         for (auto &[net_name, net_info] : net_names.items())
         {
             auto &bit_list = net_info["bits"];
