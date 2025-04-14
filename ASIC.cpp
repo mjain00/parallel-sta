@@ -10,10 +10,11 @@ void display_asic(const ASIC &asic)
 {
     cout << "ASIC Details:" << endl;
 
-    cout << "Cell List:" << endl;
+    cout << "\n\nCell List:" << endl;
 
     for (const auto &cell : asic.cells)
     {
+        cout << "Cell ID: " << cell.id << endl;
         cout << "Cell Type: " << static_cast<int>(cell.type) << endl;
         cout << "Delay: " << cell.delay << endl;
         cout << "Inputs: ";
@@ -27,7 +28,7 @@ void display_asic(const ASIC &asic)
         {
             cout << output << " ";
         }
-        cout << endl;
+        cout << endl << endl;
     }
 
     cout << "IO list:" << endl;
@@ -42,14 +43,14 @@ void display_asic(const ASIC &asic)
     {
         cout << output << " ";
     }
-    cout << endl;
+    cout << endl << endl;
 
     cout << "Paths: ";
     for (const auto &path : asic.paths)
     {
         cout << path << " ";
     }
-    cout << endl;
+    cout << endl << endl;
 
     cout << "Net Mappings:" << endl;
     for (const auto &pair : asic.net_dict)
@@ -154,7 +155,7 @@ ASIC parse_json(const string &filename)
                     }
                 }
             }
-
+            new_cell.id = asic.cells.size();
             asic.cells.push_back(new_cell);
         }
         auto &port_dict = data["modules"][top_name]["ports"];

@@ -23,7 +23,7 @@ int main()
     dag.buildFromASIC(asic);
     std::cout << "DAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
-    std::vector<int> sorted = dag.topologicalSort();
+    std::vector<int> sorted = dag.topologicalSort(asic);
     std::cout << "\nTopological Order:\n";
     std::cout << "BYE!" << std::endl;
 }

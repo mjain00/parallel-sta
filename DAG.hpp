@@ -10,6 +10,7 @@
 class DAG {
 private:
     std::map<int, std::vector<int>> adjList; // Adjacency list for the graph
+    std::map<int, int> netToCell; // Mapping from net ID to cell ID
 
 public:
     // Adds a directed edge from 'from' node to 'to' node
@@ -20,7 +21,7 @@ public:
 
     // Builds the DAG based on the provided ASIC object
     void buildFromASIC(const ASIC& asic);
-    std::vector<int> topologicalSort() const;
+    std::vector<int> topologicalSort(const ASIC& asic);
 
 };
 

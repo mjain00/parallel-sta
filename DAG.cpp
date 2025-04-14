@@ -45,6 +45,7 @@ void DAG::buildFromASIC(const ASIC& asic) {
         for (const auto& input : cell.inputs) {
             for (const auto& output : cell.outputs) {
                 addEdge(input, output);  // Create edges based on the cell's inputs and outputs
+                netToCell[output] = cell.id;
             }
         }
     }
@@ -52,7 +53,7 @@ void DAG::buildFromASIC(const ASIC& asic) {
 
 
 
-std::vector<int> DAG::topologicalSort() const {
+std::vector<int> DAG::topologicalSort(const ASIC& asic) {
     std::unordered_map<int, int> inDegree;
     std::unordered_map<int, int> delay;  // Store delay of each node
     std::vector<int> result;
@@ -89,21 +90,29 @@ std::vector<int> DAG::topologicalSort() const {
 
         std::cout << "\nProcessing node " << current 
                   << " with current accumulated delay = " << delay[current] << "\n";
-
-        for (int neighbor : adjList.at(current)) {
-            inDegree[neighbor]--;
-            int oldDelay = delay[neighbor];
-            delay[neighbor] = std::max(delay[neighbor], delay[current] + 1);
-
-            std::cout << "  -> Visiting neighbor " << neighbor
-                      << ", decremented in-degree to " << inDegree[neighbor] << "\n";
-            std::cout << "     Delay update: max(" << oldDelay << ", " 
-                      << delay[current] << " + 1) = " << delay[neighbor] << "\n";
-
-            if (inDegree[neighbor] == 0) {
-                q.push(neighbor);
-                std::cout << "     Enqueued " << neighbor << " (now in-degree 0)\n";
+        if (adjList.count(current) != 0) {
+            for (int neighbor : adjList.at(current)) {
+                inDegree[neighbor]--;
+                int oldDelay = delay[neighbor];
+                int cellDelay = 0;
+                if (netToCell.count(neighbor)) {
+                    int cellId = netToCell[neighbor];
+                    cellDelay = asic.cells[cellId].delay;
+                }
+                delay[neighbor] = std::max(delay[neighbor], delay[current] + cellDelay);
+    
+                std::cout << "  -> Visiting neighbor " << neighbor
+                          << ", decremented in-degree to " << inDegree[neighbor] << "\n";
+                std::cout << "     Delay update: max(" << oldDelay << ", " 
+                          << delay[current] << " + 1) = " << delay[neighbor] << "\n";
+    
+                if (inDegree[neighbor] == 0) {
+                    q.push(neighbor);
+                    std::cout << "     Enqueued " << neighbor << " (now in-degree 0)\n";
+                }
             }
+        } else {
+            std::cout << "  -> No neighbors for node " << current << "\n";
         }
     }
 

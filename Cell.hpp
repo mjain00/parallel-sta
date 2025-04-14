@@ -6,6 +6,7 @@ using namespace std;
 
 typedef struct
 {
+    int id;
     double delay;
     CellType type;
     vector<int> inputs;
