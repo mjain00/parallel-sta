@@ -16,8 +16,8 @@ int main()
 
     // parse json file
     std::cout << "Hello World!" << std::endl;
-    // ASIC asic = parse_json("multiout.json");
-    ASIC asic = parse_json("simple.json");
+    ASIC asic = parse_json("multiout.json");
+    // ASIC asic = parse_json("simple.json");
     display_asic(asic);
     map<int, Cell> cell_map = create_cell_map(asic.cells);
     DAG dag;

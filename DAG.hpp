@@ -1,5 +1,12 @@
 #ifndef DAG_HPP
 #define DAG_HPP
+#define CLOCK_PERIOD = 50
+#define SETUP_TIME   = 8  //time that DFF input needs to be stable before the clock edge
+#define HOLD_TIME    = 4  //time that DFF input needs to be stable after the clock edge
+#define CLK2Q_MIN    = 1 //fastest time between clock edge and DFF output changing
+#define CLK2Q_MAX    = 5 //slowest time between clock edge and DFF output changing
+
+CLK_SKEW_MAX = 3 # worst case skew
 
 #include <vector>
 #include <map>
