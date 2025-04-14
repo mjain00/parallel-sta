@@ -5,8 +5,8 @@
 #define HOLD_TIME    = 4  //time that DFF input needs to be stable after the clock edge
 #define CLK2Q_MIN    = 1 //fastest time between clock edge and DFF output changing
 #define CLK2Q_MAX    = 5 //slowest time between clock edge and DFF output changing
+#define CLK_SKEW_MAX = 3 //slowest time between clock edge and DFF output changing
 
-CLK_SKEW_MAX = 3 # worst case skew
 
 #include <vector>
 #include <map>
