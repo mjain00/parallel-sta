@@ -1,35 +1,86 @@
 #include <iostream>
-#include <vector>
-#include <string>
+#include <fstream>
 #include <chrono>
-#include <random>
-#include <cmath>
-// #include "ASIC.hpp"
 #include "DAG.hpp"
+#include "verbose.h"
 
-// #include "DAG.hpp"
+using namespace std::chrono;
 
 
-int main()
+int main(int argc, char** argv)
 {
-    // get cmd line argument
+    std::cout << "Static Timing Analysis" << std::endl;
 
-    // parse json file
-    std::cout << "Hello World!" << std::endl;
-    ASIC asic = parse_json("simple.json");
-    // ASIC asic = parse_json("simple.json");
+    string filename = "circuits/json/simple.json";
+
+    if (argc == 2) {
+        filename = argv[1];
+    } else if (argc == 3) {
+        for (int i = 1; i < argc; ++i) {
+            if (strcmp(argv[i], "-v") || strcmp(argv[i], "--verbose") == 0) {
+                verbose = true;
+            } else {
+                filename = argv[i];
+            }
+        }
+    }
+    
+    auto start = high_resolution_clock::now();
+
+    ASIC asic = parse_json(filename);
+    
+    auto end = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(end - start).count();
+    cout << "\n[Time] Parsing JSON: " << duration << " us" << endl;
+
     display_asic(asic);
+
+    start = high_resolution_clock::now();
     map<int, Cell> cell_map = create_cell_map(asic.cells);
+    end = high_resolution_clock::now();
+    duration = duration_cast<microseconds>(end - start).count();
+    cout << "\n[Time] Creating Cell Map: " << duration << " us" << endl;
+
     DAG dag;
+
+    start = high_resolution_clock::now();
     dag.buildFromASIC(asic);
-    std::cout << "DAG Representation of the ASIC:" << std::endl;
+    end = high_resolution_clock::now();
+    duration = duration_cast<microseconds>(end - start).count();
+    cout << "\n[Time] Building DAG: " << duration << " us" << endl;
+
+    std::cout << "\nDAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
-    std::cout << "\nTopological Order:\n";
+
+    start = high_resolution_clock::now();
+    
     std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
 
-    dag.analyzeTiming(asic, cell_map, sorted);
+    end = high_resolution_clock::now();
+    duration = duration_cast<microseconds>(end - start).count();
+    cout << "\n[Time] Topological Sort (Forward Pass): " << duration << " us" << endl;
 
+    start = high_resolution_clock::now();
 
-    
+    std::unordered_map<int, float> slack = dag.analyzeTiming(asic, cell_map, sorted);
+
+    end = high_resolution_clock::now();
+    duration = duration_cast<microseconds>(end - start).count();
+    cout << "\n[Time] Analyze Timing (Backward Pass): " << duration << " us" << endl;
+
+    std::cout << "\nRESULTS:" << std::endl;
+
+    for (const auto& [net, s] : slack) {
+        std::string name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
+        std::cout << "Node " << name << " (ID: " << net << ") | Slack: " << s;
+
+        if (s < 0) {
+            std::cout << " | Timing Violation!";
+        } else {
+            std::cout << " | Timing OK!";
+        }
+
+        std::cout << std::endl;
+    }
     std::cout << "BYE!" << std::endl;
 }
