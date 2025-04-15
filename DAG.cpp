@@ -52,7 +52,7 @@ void DAG::buildFromASIC(const ASIC& asic) {
 
 std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map) {
     std::unordered_map<int, int> inDegree;
-    std::unordered_map<int, int> delay;  // Store delay of each node
+    // std::unordered_map<int, int> delay;  // Store delay of each node
     std::vector<int> result;
     std::queue<int> q;
 
@@ -73,7 +73,7 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
     for (const auto& node : inDegree) {
         if (node.second == 0) {
             q.push(node.first);
-            delay[node.first] = 0;
+            arrival_time[node.first] = 0;
             std::cout << "Enqueued node " << node.first 
                       << " with in-degree 0, initial delay = 0\n";
         }
@@ -86,11 +86,11 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
         result.push_back(current);
 
         std::cout << "\nProcessing node " << current 
-                  << " with current accumulated delay = " << delay[current] << "\n";
+                  << " with current accumulated delay = " << arrival_time[current] << "\n";
         if (adjList.count(current) != 0) {
             for (int neighbor : adjList.at(current)) {
                 inDegree[neighbor]--;
-                int oldDelay = delay[neighbor];
+                int oldDelay = arrival_time[neighbor];
                 int cellDelay = 0;
                 
                 // Check if the neighbor exists in the cell_map
@@ -100,12 +100,12 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
                 }
 
                 // Update the delay based on the current node's delay + the cell delay (if any)
-                delay[neighbor] = std::max(delay[neighbor], delay[current] + cellDelay);
+                arrival_time[neighbor] = std::max(arrival_time[neighbor], arrival_time[current] + cellDelay);
     
                 std::cout << "  -> Visiting neighbor " << neighbor
                           << ", decremented in-degree to " << inDegree[neighbor] << "\n";
                 std::cout << "     Delay update: max(" << oldDelay << ", " 
-                          << delay[current] << " + " << cellDelay << ") = " << delay[neighbor] << "\n";
+                          << arrival_time[current] << " + " << cellDelay << ") = " << arrival_time[neighbor] << "\n";
     
                 if (inDegree[neighbor] == 0) {
                     q.push(neighbor);
@@ -124,8 +124,88 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
 
     std::cout << "\n=== Final Topological Order and Delays ===\n";
     for (int node : result) {
-        std::cout << "Node " << node << " | Accumulated delay: " << delay[node] << "\n";
+        std::cout << "Node " << node << " | Accumulated delay: " << arrival_time[node] << "\n";
     }
 
     return result;
+}
+
+void DAG::reverseList() {
+    for (const auto& [u, neighbors] : adjList) {
+        for (int v : neighbors) {
+            reverseAdjList[v].push_back(u);
+        }
+    }
+}
+
+void DAG::analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted) {
+    std::unordered_map<int, int> required_time;
+    std::unordered_map<int, float> slack;
+
+    reverseList();
+
+    std::cout << "\n=== Step 1: Initializing required times at outputs ===\n";
+    for (int output : asic.outputs) {
+        required_time[output] = CLOCK_PERIOD - SETUP_TIME;
+        std::string name = asic.net_dict.count(output) ? asic.net_dict.at(output) : "Unknown";
+        std::cout << "Output net " << name << " (ID: " << output << ") → Required time = "
+                  << required_time[output] << "\n";
+    }
+
+    std::cout << "\n=== Step 2: Propagating required times (backward) ===\n";
+    for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+        int current = *it;
+
+        if (required_time.find(current) == required_time.end()) {
+            required_time[current] = INT64_MAX;
+        }
+
+        if (reverseAdjList.count(current)) {
+            for (int fanin : reverseAdjList[current]) {
+                float cell_delay = 0.0f;
+
+                // delay from cell driving `current`
+                if (cell_map.count(current)) {
+                    cell_delay = cell_map.at(current).delay;
+                }
+
+                int candidate_time = required_time[current] - cell_delay;
+
+                if (required_time.find(fanin) == required_time.end()) {
+                    required_time[fanin] = candidate_time;
+                } else {
+                    required_time[fanin] = std::min(required_time[fanin], candidate_time);
+                }
+
+                std::string fanin_name = asic.net_dict.count(fanin) ? asic.net_dict.at(fanin) : "Unknown";
+                std::cout << "  Fanin " << fanin_name << " (ID: " << fanin 
+                          << ") → Required time updated to " << required_time[fanin] 
+                          << " (via " << cell_delay << " delay)\n";
+            }
+        }
+    }
+
+    std::cout << "\n=== Step 3: Slack Computation ===\n";
+    for (int net : sorted) {
+        float at = arrival_time.count(net) ? arrival_time.at(net) : 0.0f;
+        float rt = required_time.count(net) ? required_time[net] : CLOCK_PERIOD;
+
+        float s = rt - at;
+        slack[net] = s;
+
+        std::string net_name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
+
+        std::cout << "Net " << net_name << " (ID: " << net << ")"
+                  << " | Arrival: " << at
+                  << " | Required: " << rt
+                  << " | Slack: " << s;
+
+        if (s < 0)
+            std::cout << " VIOLATION!";
+        else if (s == 0)
+            std::cout << " CRITICAL PATH";
+
+        std::cout << std::endl;
+    }
+
 }
