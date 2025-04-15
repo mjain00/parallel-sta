@@ -12,7 +12,8 @@
 #include <map>
 #include <queue>
 
-#include "ASIC.hpp"  // Ensure Cell.hpp is defined correctly.
+#include "ASIC.hpp" 
+#include "verbose.h"
 
 class DAG {
 private:
@@ -37,7 +38,7 @@ public:
     // Performs topological sort on the DAG and returns the sorted order
     std::vector<int> topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map);   
 
-    void analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted);
+    std::unordered_map<int, float> analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted);
 };
 
 #endif // DAG_HPP

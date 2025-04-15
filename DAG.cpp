@@ -1,21 +1,11 @@
 #include "DAG.hpp"
 #include <iostream>
+#include <chrono>
 
 // Adds a directed edge from 'from' to 'to'
 void DAG::addEdge(int from, int to) {
     adjList[from].push_back(to);
 }
-
-// Displays the graph in a readable format
-// void DAG::displayGraph() {
-//     for (const auto& node : adjList) {
-//         std::cout << "Node " << node.first << " has edges to: ";
-//         for (const auto& neighbor : node.second) {
-//             std::cout << neighbor << " ";
-//         }
-//         std::cout << std::endl;
-//     }
-// }
 
 
 void DAG::displayGraph(const ASIC& asic) {
@@ -52,41 +42,57 @@ void DAG::buildFromASIC(const ASIC& asic) {
 
 std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map) {
     std::unordered_map<int, int> inDegree;
-    // std::unordered_map<int, int> delay;  // Store delay of each node
     std::vector<int> result;
     std::queue<int> q;
 
-    std::cout << "\n=== Step 1: Calculating in-degrees ===\n";
+    if (verbose) {
+        std::cout << "\n=== Step 1: Calculating in-degrees ===\n";
+    }
+    
     for (const auto& node : adjList) {
         if (inDegree.find(node.first) == inDegree.end()) {
             inDegree[node.first] = 0;
         }
         for (int neighbor : node.second) {
             inDegree[neighbor]++;
-            std::cout << "Edge: " << node.first << " -> " << neighbor 
+
+            if (verbose) {
+                std::cout << "Edge: " << node.first << " -> " << neighbor 
                       << " | Incrementing in-degree of " << neighbor 
                       << " to " << inDegree[neighbor] << "\n";
+            }
         }
     }
 
-    std::cout << "\n=== Step 2: Enqueuing in-degree 0 nodes ===\n";
+    if (verbose) {
+        std::cout << "\n=== Step 2: Enqueuing in-degree 0 nodes ===\n";
+    }
+    
     for (const auto& node : inDegree) {
         if (node.second == 0) {
             q.push(node.first);
             arrival_time[node.first] = 0;
-            std::cout << "Enqueued node " << node.first 
+            if (verbose) {
+                std::cout << "Enqueued node " << node.first 
                       << " with in-degree 0, initial delay = 0\n";
+            }
         }
     }
 
-    std::cout << "\n=== Step 3: Processing queue ===\n";
+    if (verbose) {
+        std::cout << "\n=== Step 3: Processing queue ===\n";
+    }
+    
     while (!q.empty()) {
         int current = q.front();
         q.pop();
         result.push_back(current);
 
-        std::cout << "\nProcessing node " << current 
+        if (verbose) {
+            std::cout << "\nProcessing node " << current 
                   << " with current accumulated delay = " << arrival_time[current] << "\n";
+        }
+        
         if (adjList.count(current) != 0) {
             for (int neighbor : adjList.at(current)) {
                 inDegree[neighbor]--;
@@ -102,18 +108,26 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
                 // Update the delay based on the current node's delay + the cell delay (if any)
                 arrival_time[neighbor] = std::max(arrival_time[neighbor], arrival_time[current] + cellDelay);
     
-                std::cout << "  -> Visiting neighbor " << neighbor
+                if (verbose) {
+                    std::cout << "  -> Visiting neighbor " << neighbor
                           << ", decremented in-degree to " << inDegree[neighbor] << "\n";
-                std::cout << "     Delay update: max(" << oldDelay << ", " 
+                    std::cout << "     Delay update: max(" << oldDelay << ", " 
                           << arrival_time[current] << " + " << cellDelay << ") = " << arrival_time[neighbor] << "\n";
     
+                }
+                
                 if (inDegree[neighbor] == 0) {
                     q.push(neighbor);
-                    std::cout << "     Enqueued " << neighbor << " (now in-degree 0)\n";
+
+                    if (verbose) {
+                        std::cout << "     Enqueued " << neighbor << " (now in-degree 0)\n";
+                    }
                 }
             }
-        } else {
-            std::cout << "  -> No neighbors for node " << current << "\n";
+        } else { 
+            if (verbose) {
+                std::cout << "  -> No neighbors for node " << current << "\n";
+            }            
         }
     }
 
@@ -122,10 +136,12 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
         return {};
     }
 
-    std::cout << "\n=== Final Topological Order and Delays ===\n";
-    for (int node : result) {
-        std::cout << "Node " << node << " | Accumulated delay: " << arrival_time[node] << "\n";
-    }
+    if (verbose) {
+        std::cout << "\n=== Final Topological Order and Delays ===\n";
+        for (int node : result) {
+            std::cout << "Node " << node << " | Accumulated delay: " << arrival_time[node] << "\n";
+        }
+    }    
 
     return result;
 }
@@ -138,21 +154,29 @@ void DAG::reverseList() {
     }
 }
 
-void DAG::analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted) {
+std::unordered_map<int, float> DAG::analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted) {
     std::unordered_map<int, int> required_time;
     std::unordered_map<int, float> slack;
 
     reverseList();
 
-    std::cout << "\n=== Step 1: Initializing required times at outputs ===\n";
+    if (verbose) {
+        std::cout << "\n=== Step 1: Initializing required times at outputs ===\n";
+    }
+    
     for (int output : asic.outputs) {
         required_time[output] = CLOCK_PERIOD - SETUP_TIME;
         std::string name = asic.net_dict.count(output) ? asic.net_dict.at(output) : "Unknown";
-        std::cout << "Output net " << name << " (ID: " << output << ") → Required time = "
+
+        if (verbose) {
+            std::cout << "Output net " << name << " (ID: " << output << ") → Required time = "
                   << required_time[output] << "\n";
+        }        
     }
 
-    std::cout << "\n=== Step 2: Propagating required times (backward) ===\n";
+    if (verbose) {
+        std::cout << "\n=== Step 2: Propagating required times (backward) ===\n";
+    }
     for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
         int current = *it;
 
@@ -178,14 +202,20 @@ void DAG::analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, s
                 }
 
                 std::string fanin_name = asic.net_dict.count(fanin) ? asic.net_dict.at(fanin) : "Unknown";
-                std::cout << "  Fanin " << fanin_name << " (ID: " << fanin 
-                          << ") → Required time updated to " << required_time[fanin] 
-                          << " (via " << cell_delay << " delay)\n";
+
+                if (verbose) {
+                    std::cout << "  Fanin " << fanin_name << " (ID: " << fanin 
+                            << ") → Required time updated to " << required_time[fanin] 
+                            << " (via " << cell_delay << " delay)\n";
+                }
             }
         }
     }
 
-    std::cout << "\n=== Step 3: Slack Computation ===\n";
+    if (verbose) {
+        std::cout << "\n=== Step 3: Slack Computation ===\n";
+    }
+    
     for (int net : sorted) {
         float at = arrival_time.count(net) ? arrival_time.at(net) : 0.0f;
         float rt = required_time.count(net) ? required_time[net] : CLOCK_PERIOD;
@@ -195,17 +225,17 @@ void DAG::analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, s
 
         std::string net_name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
 
-        std::cout << "Net " << net_name << " (ID: " << net << ")"
+        if (verbose) {
+            std::cout << "Net " << net_name << " (ID: " << net << ")"
                   << " | Arrival: " << at
                   << " | Required: " << rt
                   << " | Slack: " << s;
-
         if (s < 0)
             std::cout << " VIOLATION!";
         else if (s == 0)
             std::cout << " CRITICAL PATH";
-
-        std::cout << std::endl;
+            std::cout << std::endl;
+        }
     }
-
+    return slack;
 }

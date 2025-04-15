@@ -1,2 +1,2 @@
 all:
-	g++ ASIC.cpp DAG.cpp sta_starter.cpp -o sta.o
+	g++ verbose.cpp ASIC.cpp DAG.cpp sta_starter.cpp -o sta.o
