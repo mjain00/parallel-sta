@@ -13,17 +13,18 @@ int main(int argc, char** argv)
 
     string filename = "circuits/json/simple.json";
 
-    if (argc == 2) {
-        filename = argv[1];
-    } else if (argc == 3) {
+    if (argc > 1 && argc < 4) {
         for (int i = 1; i < argc; ++i) {
-            if (strcmp(argv[i], "-v") || strcmp(argv[i], "--verbose") == 0) {
+            if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
                 verbose = true;
             } else {
                 filename = argv[i];
             }
         }
-    }
+    } else if (argc > 3) {
+        std::cerr << "Usage: " << argv[0] << " [-v|--verbose] <filename>" << std::endl;
+        return 1;
+    }    
     
     auto start = high_resolution_clock::now();
 
