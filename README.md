@@ -119,12 +119,12 @@ The platform chosen for this project is a **multi-core CPU environment** using *
 **OpenMP** will allow us to dynamically allocate tasks to different threads and define dependencies between the data. This provides a flexible and efficient way to handle the parallelization of the STA algorithm.
 
 ## Schedule
+## Project Timeline
 
-| Week | Dates       | Tasks                                                                 |
-|------|-------------|-----------------------------------------------------------------------|
-| 0    | 3/24 - 3/30 | Plan the outline of the project. <br> Set up repository and gather data. |
-| 1    | 3/31 - 4/6  | Get sequential code running. <br> Benchmark the sequential algorithm.  |
-| 2    | 4/7 - 4/13  | Implement parallel static time analysis using **OpenMP** - part 1 from paper. <br> Run experiments to analyze performance. <br> Complete Milestone report. |
-| 3    | 4/14 - 4/20 | Implement the timing updates using task graphs - overcoming synchronization challenges posed by OpenMP - part 2 from paper. |
-| 4    | 4/21 - 4/27 | Stretch goal: Implement the **CPU-parallel partitioning algorithm** - algorithm from paper. <br> Realistic goal: Complete the task graph implementation. |
-| 5    | 4/28 - 5/2  | Final Poster Session. |
+| Week  | Dates          | Tasks                                                                                         |
+|-------|----------------|-----------------------------------------------------------------------------------------------|
+| 3.2   | 4/16 - 4/20    | Create more test circuits, optimize OpenMP implementation, complete performance analysis      |
+| 4.1   | 4/21 - 4/23    | Create the task graph, work on task graph dependencies                                        |
+| 4.2   | 4/24 - 4/27    | Parallelize forward and backward pass using the task graph                                    |
+| 5.1   | 4/28 - 4/30    | Optimize load balancing and synchronization of the task graph, bundle similar dependencies    |
+| 5.2   | 4/30 - 5/2     | Performance and factor analysis, write final report                                            |
