@@ -10,6 +10,9 @@ Our project focuses on performing **static timing analysis** on circuits to iden
 ## Proposal
 Here is our project [proposal](proposal.pdf).
 
+## Milestone Report
+Here is our [milestone report](milestone.pdf).
+
 ## Background:  
 Our project builds on parallelizing static time analysis to efficiently analyze any time violations in circuits. The application, STA, is used to evaluate the correctness and performance of circuits.  The tool takes as input a netlist of gates (AND, OR, NOT) and the flip-flops between them. It then uses cell delay models to calculate gate delays. These gate delays include timing constraints like clock period, setup time, and hold time. The setup time ensures that the signal arrives before the clock edge by a specified margin. The hold time ensures that the data signal remains stable after the clock edge. If the slack of a path is negative, there’s a timing violation.
 
