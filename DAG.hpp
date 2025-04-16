@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include <queue>
+#include <omp.h>
 
 #include "ASIC.hpp" 
 #include "verbose.h"
