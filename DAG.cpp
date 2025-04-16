@@ -103,14 +103,27 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
         std::cout << "\n=== Step 2: Enqueuing in-degree 0 nodes ===\n";
     }
     
-    for (const auto& node : inDegree) {
-        if (node.second == 0) {
-            q.push(node.first);
-            arrival_time[node.first] = 0;
-            if (verbose) {
-                std::cout << "Enqueued node " << node.first 
-                      << " with in-degree 0, initial delay = 0\n";
-            }
+    //add all the independent nodes to the queue - traverse through them in parallel
+    #pragma omp parallel
+    {
+        for (const auto& node : inDegree) {
+            #pragma omp single
+            {
+                #pragma omp task
+                {
+                    if (node.second == 0) {
+                        #pragma omp critical 
+                        {
+                            q.push(node.first);
+                        }            
+                        arrival_time[node.first] = 0;
+                        if (verbose) {
+                            std::cout << "TID: " << omp_get_thread_num() << " Enqueued node " << node.first 
+                                << " with in-degree 0, initial delay = 0\n";
+                        }
+                    }
+                }
+            }            
         }
     }
 
@@ -118,51 +131,67 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
         std::cout << "\n=== Step 3: Processing queue ===\n";
     }
     
-    while (!q.empty()) {
-        int current = q.front();
-        q.pop();
-        result.push_back(current);
-
-        if (verbose) {
-            std::cout << "\nProcessing node " << current 
-                  << " with current accumulated delay = " << arrival_time[current] << "\n";
-        }
-        
-        if (adjList.count(current) != 0) {
-            for (int neighbor : adjList.at(current)) {
-                inDegree[neighbor]--;
-                int oldDelay = arrival_time[neighbor];
-                int cellDelay = 0;
-                
-                // Check if the neighbor exists in the cell_map
-                if (cell_map.count(neighbor)) {
-                    // If the node exists in cell_map, accumulate the delay
-                    cellDelay = cell_map.at(neighbor).delay;  // Assuming 'delay' is a property of the Cell
-                }
-
-                // Update the delay based on the current node's delay + the cell delay (if any)
-                arrival_time[neighbor] = std::max(arrival_time[neighbor], arrival_time[current] + cellDelay);
-    
-                if (verbose) {
-                    std::cout << "  -> Visiting neighbor " << neighbor
-                          << ", decremented in-degree to " << inDegree[neighbor] << "\n";
-                    std::cout << "     Delay update: max(" << oldDelay << ", " 
-                          << arrival_time[current] << " + " << cellDelay << ") = " << arrival_time[neighbor] << "\n";
-    
-                }
-                
-                if (inDegree[neighbor] == 0) {
-                    q.push(neighbor);
-
+    #pragma omp parallel
+    {
+        while (!q.empty()) 
+        {
+            #pragma omp single
+            {
+                #pragma omp task
+                {
+                    int current;
+                    #pragma omp critical
+                    {
+                        current = q.front();
+                        q.pop();
+                        result.push_back(current);
+                    }
+                    
                     if (verbose) {
-                        std::cout << "     Enqueued " << neighbor << " (now in-degree 0)\n";
+                        std::cout << "\nTID: " << omp_get_thread_num() << " Processing node " << current 
+                            << " with current accumulated delay = " << arrival_time[current] << "\n";
+                    }
+                    
+                    if (adjList.count(current) != 0) {
+                        for (int neighbor : adjList.at(current)) {
+                            #pragma omp atomic
+                            inDegree[neighbor]--;
+                            int oldDelay = arrival_time[neighbor];
+                            int cellDelay = 0;
+                            
+                            if (cell_map.count(neighbor)) {
+                                cellDelay = cell_map.at(neighbor).delay;
+                            }
+        
+                            arrival_time[neighbor] = std::max(arrival_time[neighbor], arrival_time[current] + cellDelay);
+                
+                            if (verbose) {
+                                std::cout << "  -> Visiting neighbor " << neighbor
+                                    << ", decremented in-degree to " << inDegree[neighbor] << "\n";
+                                std::cout << "     Delay update: max(" << oldDelay << ", " 
+                                    << arrival_time[current] << " + " << cellDelay << ") = " << arrival_time[neighbor] << "\n";
+                
+                            }
+                            
+                            if (inDegree[neighbor] == 0) {
+        
+                                #pragma omp critical
+                                {
+                                    q.push(neighbor);
+                                }                        
+        
+                                if (verbose) {
+                                    std::cout << "     Enqueued " << neighbor << " (now in-degree 0)\n";
+                                }
+                            }
+                        }
+                    } else { 
+                        if (verbose) {
+                            std::cout << "  -> No neighbors for node " << current << "\n";
+                        }            
                     }
                 }
             }
-        } else { 
-            if (verbose) {
-                std::cout << "  -> No neighbors for node " << current << "\n";
-            }            
         }
     }
 

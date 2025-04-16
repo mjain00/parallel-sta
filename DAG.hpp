@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include <queue>
+#include <omp.h>
 #include <unordered_set>
 
 #include "ASIC.hpp" 
