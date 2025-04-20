@@ -121,105 +121,145 @@ ASIC parse_json(const string &filename)
     ifstream file(filename);
     json data;
 
-    file >> data;
+    try {
+        file >> data;
+    } catch (const std::exception &e) {
+        std::cerr << "Error parsing JSON file: " << e.what() << std::endl;
+        return asic;
+    }
 
     int clock = -1;
 
-    for (auto &[top_name, module_data] : data["modules"].items())
-    {
-        auto &cell_dict = module_data["cells"];
-        vector<Cell> netlist;
-
-        for (const auto &cell : cell_dict)
+    try {
+        for (auto &[top_name, module_data] : data["modules"].items())
         {
-            Cell new_cell;
-            CellType type = parse_cell_type(cell["type"]);
-            new_cell.type = type;
-            new_cell.delay = get_delay(new_cell.type);
+            auto &cell_dict = module_data["cells"];
+            vector<Cell> netlist;
 
-            vector<int> output_bits;
-
-            for (auto &[connection, bits] : cell["connections"].items())
+            for (const auto &cell : cell_dict)
             {
-                if (cell["port_directions"][connection] == "input")
+                Cell new_cell;
+                CellType type = parse_cell_type(cell["type"]);
+                new_cell.type = type;
+                new_cell.delay = get_delay(new_cell.type);
+
+                vector<int> output_bits;
+
+                for (auto &[connection, bits] : cell["connections"].items())
                 {
-                    for (auto &bit : bits)
+                    const auto &direction = cell["port_directions"][connection];
+                    if (!direction.is_string()) {
+                        std::cerr << "Direction at connection '" << connection << "' is not a string!" << std::endl;
+                        continue;
+                    }
+
+                    if (direction == "input")
                     {
-                        int bit_val = bit.get<int>();
-                        if (type != CellType::DFF_P || connection != "C")
+                        for (auto &bit : bits)
                         {
-                            new_cell.inputs.push_back(bit_val);
+                            if (!bit.is_number()) {
+                                std::cerr << "Expected number in input bits but got: " << bit << std::endl;
+                                continue;
+                            }
+
+                            int bit_val = bit.get<int>();
+                            if (type != CellType::DFF_P || connection != "C")
+                            {
+                                new_cell.inputs.push_back(bit_val);
+                            }
+                            else
+                            {
+                                clock = bit_val;
+                            }
                         }
-                        else
+                    }
+                    else // output
+                    {
+                        for (auto &bit : bits)
                         {
-                            clock = bit_val;
+                            if (!bit.is_number()) {
+                                std::cerr << "Expected number in output bits but got: " << bit << std::endl;
+                                continue;
+                            }
+
+                            int bit_val = bit.get<int>();
+                            new_cell.outputs.push_back(bit_val);
+                            output_bits.push_back(bit_val);
                         }
                     }
                 }
-                else // output
-                {
-                    for (auto &bit : bits)
-                    {
-                        int bit_val = bit.get<int>();
-                        new_cell.outputs.push_back(bit_val);
-                        output_bits.push_back(bit_val);
-                    }
-                }
-            }
 
-            // Set cell.id to the output bit number (use first one if multiple)
-            if (!output_bits.empty())
-            {
-                new_cell.id = output_bits[0]; // or handle multiple outputs as needed
-            }
-            else
-            {
-                new_cell.id = -1; // fallback if no output
-            }
-
-            asic.cells.push_back(new_cell);
-        }
-
-        auto &port_dict = data["modules"][top_name]["ports"];
-        for (auto &[port_name, port_details] : port_dict.items())
-        {
-            if (port_details["direction"] == "input")
-            {
-                for (auto &bit : port_details["bits"])
+                // Set cell.id to the output bit number (use first one if multiple)
+                if (!output_bits.empty())
                 {
-                    int bit_val = bit.get<int>();
-                    if (bit_val != clock)
-                    {
-                        asic.inputs.push_back(bit_val);
-                    }
-                }
-            }
-            else
-            {
-                for (auto &bit : port_details["bits"])
-                {
-                    int bit_val = bit.get<int>();
-                    asic.outputs.push_back(bit_val);
-                }
-            }
-        }
-
-        auto &net_names = data["modules"][top_name]["netnames"];
-        for (auto &[net_name, net_info] : net_names.items())
-        {
-            auto &bit_list = net_info["bits"];
-            for (int i = 0; i < bit_list.size(); i++)
-            {
-                if (bit_list.size() == 1)
-                {
-                    asic.net_dict[bit_list[i]] = net_name;
+                    new_cell.id = output_bits[0];
                 }
                 else
                 {
-                    asic.net_dict[bit_list[i]] = net_name + "[" + to_string(i) + "]";
+                    new_cell.id = -1;
+                }
+
+                asic.cells.push_back(new_cell);
+            }
+
+            auto &port_dict = data["modules"][top_name]["ports"];
+            for (auto &[port_name, port_details] : port_dict.items())
+            {
+                const auto &direction = port_details["direction"];
+                if (!direction.is_string()) {
+                    std::cerr << "Port direction for " << port_name << " is not a string" << std::endl;
+                    continue;
+                }
+
+                for (auto &bit : port_details["bits"])
+                {
+                    if (!bit.is_number()) {
+                        std::cerr << "Expected number in port bits but got: " << bit << std::endl;
+                        continue;
+                    }
+
+                    int bit_val = bit.get<int>();
+                    if (direction == "input")
+                    {
+                        if (bit_val != clock)
+                        {
+                            asic.inputs.push_back(bit_val);
+                        }
+                    }
+                    else
+                    {
+                        asic.outputs.push_back(bit_val);
+                    }
+                }
+            }
+
+            auto &net_names = data["modules"][top_name]["netnames"];
+            for (auto &[net_name, net_info] : net_names.items())
+            {
+                auto &bit_list = net_info["bits"];
+                for (int i = 0; i < bit_list.size(); i++)
+                {
+                    if (!bit_list[i].is_number()) {
+                        std::cerr << "Netname bit is not a number: " << bit_list[i] << std::endl;
+                        continue;
+                    }
+
+                    if (bit_list.size() == 1)
+                    {
+                        asic.net_dict[bit_list[i]] = net_name;
+                    }
+                    else
+                    {
+                        asic.net_dict[bit_list[i]] = net_name + "[" + to_string(i) + "]";
+                    }
                 }
             }
         }
+    } catch (const nlohmann::json::type_error &e) {
+        std::cerr << "JSON type error: " << e.what() << std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << "Exception while parsing JSON: " << e.what() << std::endl;
     }
+
     return asic;
 }
