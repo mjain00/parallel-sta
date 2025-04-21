@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include <queue>
+#include <unordered_set>
 
 #include "ASIC.hpp" 
 #include "verbose.h"
@@ -34,8 +35,7 @@ public:
 
     // Builds the DAG based on the provided ASIC object
     void buildFromASIC(const ASIC& asic);
-
-    // Performs topological sort on the DAG and returns the sorted order
+    void removeCycles(); // Performs topological sort on the DAG and returns the sorted order
     std::vector<int> topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map);   
 
     std::unordered_map<int, float> analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted);

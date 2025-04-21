@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 
     std::cout << "\nDAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
-
+    dag.removeCycles();
     start = high_resolution_clock::now();
     
     std::vector<int> sorted = dag.topologicalSort(asic, cell_map);

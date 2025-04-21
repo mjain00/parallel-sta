@@ -40,6 +40,41 @@ void DAG::buildFromASIC(const ASIC& asic) {
     }
 }
 
+
+void DAG::removeCycles() {
+    std::unordered_set<int> visited;
+    std::unordered_set<int> recStack;
+
+    std::function<void(int)> dfs = [&](int node) {
+        visited.insert(node);
+        recStack.insert(node);
+
+        auto& neighbors = adjList[node]; // direct reference to the neighbor set
+        for (auto it = neighbors.begin(); it != neighbors.end(); ) {
+            int neighbor = *it;
+
+            if (recStack.count(neighbor)) {
+                // Found a back edge → remove it
+                std::cout << "Removing back edge: " << node << " -> " << neighbor << "\n";
+                it = neighbors.erase(it); // erase and continue
+            } else if (!visited.count(neighbor)) {
+                dfs(neighbor);
+                ++it;
+            } else {
+                ++it;
+            }
+        }
+
+        recStack.erase(node);
+    };
+
+    for (const auto& [node, _] : adjList) {
+        if (!visited.count(node)) {
+            dfs(node);
+        }
+    }
+}
+
 std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map) {
     std::unordered_map<int, int> inDegree;
     std::vector<int> result;
