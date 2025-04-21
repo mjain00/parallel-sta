@@ -86,6 +86,112 @@ CellType parse_cell_type(const std::string &type_str)
         return CellType::XNOR;
     if (type_str == "$_DFF_P_")
         return CellType::DFF_P;
+    if (type_str == "$_DFF_PN0_")
+        return CellType::DFF_PN0;
+    if (type_str == "$_MUX_")
+        return CellType::MUX;
+    if (type_str == "AND2_X2")
+        return CellType::AND2_X2;
+    if (type_str == "AND2_X4")
+        return CellType::AND2_X4;
+    if (type_str == "AND3_X2")
+        return CellType::AND3_X2;
+    if (type_str == "AND3_X4")
+        return CellType::AND3_X4;
+    if (type_str == "AND4_X2")
+        return CellType::AND4_X2;
+    if (type_str == "AND4_X4")
+        return CellType::AND4_X4;
+    if (type_str == "AOI211_X2")
+        return CellType::AOI211_X2;
+    if (type_str == "AOI21_X2")
+        return CellType::AOI21_X2;
+    if (type_str == "AOI21_X4")
+        return CellType::AOI21_X4;
+    if (type_str == "AOI221_X2")
+        return CellType::AOI221_X2;
+    if (type_str == "AOI222_X1")
+        return CellType::AOI222_X1;
+    if (type_str == "AOI222_X2")
+        return CellType::AOI222_X2;
+    if (type_str == "AOI22_X2")
+        return CellType::AOI22_X2;
+    if (type_str == "CLKBUF_X1")
+        return CellType::CLKBUF_X1;
+    if (type_str == "CLKBUF_X2")
+        return CellType::CLKBUF_X2;
+    if (type_str == "DFFR_X1")
+        return CellType::DFFR_X1;
+    if (type_str == "DFFR_X2")
+        return CellType::DFFR_X2;
+    if (type_str == "DFFS_X2")
+        return CellType::DFFS_X2;
+    if (type_str == "DFF_X1")
+        return CellType::DFF_X1;
+    if (type_str == "DFF_X2")
+        return CellType::DFF_X2;
+    if (type_str == "HA_X1")
+        return CellType::HA_X1;
+    if (type_str == "INV_X1")
+        return CellType::INV_X1;
+    if (type_str == "INV_X16")
+        return CellType::INV_X16;
+    if (type_str == "INV_X2")
+        return CellType::INV_X2;
+    if (type_str == "INV_X32")
+        return CellType::INV_X32;
+    if (type_str == "INV_X4")
+        return CellType::INV_X4;
+    if (type_str == "INV_X8")
+        return CellType::INV_X8;
+    if (type_str == "MUX2_X1")
+        return CellType::MUX2_X1;
+    if (type_str == "NAND2_X1")
+        return CellType::NAND2_X1;
+    if (type_str == "NAND2_X2")
+        return CellType::NAND2_X2;
+    if (type_str == "NAND2_X4")
+        return CellType::NAND2_X4;
+    if (type_str == "NAND3_X2")
+        return CellType::NAND3_X2;
+    if (type_str == "NAND3_X4")
+        return CellType::NAND3_X4;
+    if (type_str == "NAND4_X2")
+        return CellType::NAND4_X2;
+    if (type_str == "NOR2_X2")
+        return CellType::NOR2_X2;
+    if (type_str == "NOR2_X4")
+        return CellType::NOR2_X4;
+    if (type_str == "NOR3_X2")
+        return CellType::NOR3_X2;
+    if (type_str == "NOR3_X4")
+        return CellType::NOR3_X4;
+    if (type_str == "NOR4_X2")
+        return CellType::NOR4_X2;
+    if (type_str == "OAI211_X2")
+        return CellType::OAI211_X2;
+    if (type_str == "OAI21_X2")
+        return CellType::OAI21_X2;
+    if (type_str == "OAI221_X2")
+        return CellType::OAI221_X2;
+    if (type_str == "OAI222_X2")
+        return CellType::OAI222_X2;
+    if (type_str == "OAI22_X1")
+        return CellType::OAI22_X1;
+    if (type_str == "OAI22_X2")
+        return CellType::OAI22_X2;
+    if (type_str == "OR2_X2")
+        return CellType::OR2_X2;
+    if (type_str == "OR2_X4")
+        return CellType::OR2_X4;
+    if (type_str == "SDFFR_X2")
+        return CellType::SDFFR_X2;
+    if (type_str == "SDFF_X2")
+        return CellType::SDFF_X2;
+    if (type_str == "XNOR2_X2")
+        return CellType::XNOR2_X2;
+    if (type_str == "XOR2_X2")
+        return CellType::XOR2_X2;
     return CellType::UNKNOWN;
 }
 
@@ -93,22 +199,81 @@ int get_delay(CellType type)
 {
     switch (type)
     {
-    case CellType::NOT:
-        return 5;
-    case CellType::AND:
-        return 9;
-    case CellType::OR:
-        return 9;
-    case CellType::XOR:
-        return 12;
-    case CellType::NAND:
-        return 13;
-    case CellType::NOR:
-        return 12;
-    case CellType::XNOR:
-        return 12;
+    case CellType::NOT: return 5;
+    case CellType::AND: return 9;
+    case CellType::OR: return 9;
+    case CellType::XOR: return 12;
+    case CellType::NAND: return 13;
+    case CellType::NOR: return 12;
+    case CellType::XNOR: return 12;
+
     case CellType::DFF_P:
-        return 0; // Or any special value
+    case CellType::DFF_PN0:
+    case CellType::DFFR_X1:
+    case CellType::DFFR_X2:
+    case CellType::DFFS_X2:
+    case CellType::DFF_X1:
+    case CellType::DFF_X2:
+    case CellType::SDFFR_X2:
+    case CellType::SDFF_X2:
+        return -1;
+
+    case CellType::MUX:
+    case CellType::MUX2_X1: return 14;
+
+    case CellType::HA_X1: return 15;
+
+    case CellType::INV_X1: return 5;
+    case CellType::INV_X2: return 4;
+    case CellType::INV_X4: return 3;
+    case CellType::INV_X8: return 2;
+    case CellType::INV_X16: return 2;
+    case CellType::INV_X32: return 1;
+
+    case CellType::AND2_X2: return 8;
+    case CellType::AND2_X4: return 7;
+    case CellType::AND3_X2: return 10;
+    case CellType::AND3_X4: return 9;
+    case CellType::AND4_X2: return 12;
+    case CellType::AND4_X4: return 11;
+
+    case CellType::NAND2_X1: return 10;
+    case CellType::NAND2_X2: return 9;
+    case CellType::NAND2_X4: return 8;
+    case CellType::NAND3_X2: return 11;
+    case CellType::NAND3_X4: return 10;
+    case CellType::NAND4_X2: return 13;
+
+    case CellType::OR2_X2: return 8;
+    case CellType::OR2_X4: return 7;
+
+    case CellType::NOR2_X2: return 9;
+    case CellType::NOR2_X4: return 8;
+    case CellType::NOR3_X2: return 10;
+    case CellType::NOR3_X4: return 9;
+    case CellType::NOR4_X2: return 12;
+
+    case CellType::AOI211_X2: return 13;
+    case CellType::AOI21_X2: return 12;
+    case CellType::AOI21_X4: return 11;
+    case CellType::AOI221_X2: return 14;
+    case CellType::AOI222_X1: return 14;
+    case CellType::AOI222_X2: return 13;
+    case CellType::AOI22_X2: return 13;
+
+    case CellType::CLKBUF_X1: return 3;
+    case CellType::CLKBUF_X2: return 2;
+
+    case CellType::OAI211_X2: return 13;
+    case CellType::OAI21_X2: return 12;
+    case CellType::OAI221_X2: return 14;
+    case CellType::OAI222_X2: return 14;
+    case CellType::OAI22_X1: return 13;
+    case CellType::OAI22_X2: return 12;
+
+    case CellType::XNOR2_X2: return 12;
+    case CellType::XOR2_X2: return 12;
+
     default:
         return 0;
     }
