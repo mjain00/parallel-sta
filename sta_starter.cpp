@@ -29,6 +29,8 @@ int main(int argc, char** argv)
     auto start = high_resolution_clock::now();
 
     ASIC asic = parse_json(filename);
+    assign_rc_to_cells(asic);
+
     
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(end - start).count();

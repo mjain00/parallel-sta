@@ -40,6 +40,8 @@ public:
     void updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map);
 
     std::unordered_map<int, float> analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted);
+    std::unordered_map<int, double> rc_delay_map; // node_id → RC delay
+
 };
 
 #endif // DAG_HPP

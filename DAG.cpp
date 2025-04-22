@@ -165,6 +165,28 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void DAG::reverseList() {
     for (const auto& [u, neighbors] : adjList) {
         for (int v : neighbors) {
