@@ -83,5 +83,5 @@ int main(int argc, char** argv)
 
         std::cout << std::endl;
     }
-    std::cout << "BYE!" << std::endl;
+    std::cout << "BYE! part1" << std::endl;
 }
