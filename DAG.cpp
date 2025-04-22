@@ -109,7 +109,7 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
             // Check if current and neighbor are valid keys in the cell_map
             if (cell_map.find(current) != cell_map.end() && cell_map.find(neighbor) != cell_map.end()) {
                 double rc_delay = computeRCDelay(cell_map.at(current), cell_map.at(neighbor));
-                double slew_rate = computeSlewRate(cell_map.at(current), cell_map.at(neighbor));
+                double slew_rate = computeSlewRate(cell_map.at(current), cell_map.at(neighbor),rc_delay);
                 delays_and_slews.push_back({current, neighbor, rc_delay, slew_rate});
                 updateArrivalTime(current, neighbor, cell_map);
 
@@ -154,12 +154,12 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
 }
 
 
-double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell) {
+double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,double rc_delay) {
     // Assuming voltage swing (V) is a constant value, e.g., 1V (you can adjust this value)
     double voltage_swing = 1.0; // V
 
     // Calculate slew rate based on the RC time constant
-    double rc_time_constant = current_cell.resistance * neighbor_cell.capacitance;
+    double rc_time_constant = rc_delay;
     double slew_rate = voltage_swing / rc_time_constant;
     double slew_time = voltage_swing / slew_rate; // (V / (V/s)) = seconds
 
