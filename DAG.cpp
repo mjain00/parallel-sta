@@ -47,6 +47,50 @@ void DAG::buildFromASIC(const ASIC &asic)
     }
 }
 
+void DAG::removeCycles()
+{
+    std::unordered_set<int> visited;
+    std::unordered_set<int> recStack;
+
+    std::function<void(int)> dfs = [&](int node)
+    {
+        visited.insert(node);
+        recStack.insert(node);
+
+        auto &neighbors = adjList[node]; // direct reference to the neighbor set
+        for (auto it = neighbors.begin(); it != neighbors.end();)
+        {
+            int neighbor = *it;
+
+            if (recStack.count(neighbor))
+            {
+                // Found a back edge → remove it
+                std::cout << "Removing back edge: " << node << " -> " << neighbor << "\n";
+                it = neighbors.erase(it); // erase and continue
+            }
+            else if (!visited.count(neighbor))
+            {
+                dfs(neighbor);
+                ++it;
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
+        recStack.erase(node);
+    };
+
+    for (const auto &[node, _] : adjList)
+    {
+        if (!visited.count(node))
+        {
+            dfs(node);
+        }
+    }
+}
+
 std::vector<int> DAG::topologicalSort(const ASIC &asic, const std::map<int, Cell> &cell_map)
 {
     std::unordered_map<int, int> inDegree;
@@ -101,10 +145,10 @@ std::vector<int> DAG::topologicalSort(const ASIC &asic, const std::map<int, Cell
         std::cout << "\n=== Step 3: Processing queue ===\n";
     }
 
-    while (!q.empty()) // all threads check this
+    while (!q.empty())
     {
         std::vector<int> next_q;
-        std::vector<int> q_copy = q; // Copy the current queue for parallel processing
+        std::vector<int> q_copy = q; // local copy of the queue
 #pragma omp parallel
         {
             std::vector<int> local_next;
@@ -131,17 +175,16 @@ std::vector<int> DAG::topologicalSort(const ASIC &asic, const std::map<int, Cell
 #pragma omp atomic capture
                         new_in_degree = --inDegree[neighbor];
 
-                        int oldDelay = arrival_time[neighbor];
+                        int oldDelay;
                         int cellDelay = 0;
-
                         if (cell_map.count(neighbor))
                         {
                             cellDelay = cell_map.at(neighbor).delay;
                         }
-
 #pragma omp critical
                         {
-                            arrival_time[neighbor] = std::max(arrival_time[neighbor], arrival_time[current] + cellDelay);
+                            oldDelay = arrival_time[neighbor];
+                            arrival_time[neighbor] = std::max(oldDelay, oldDelay + cellDelay);
                         }
 
                         if (verbose)
@@ -175,6 +218,7 @@ std::vector<int> DAG::topologicalSort(const ASIC &asic, const std::map<int, Cell
             {
                 next_q.insert(next_q.end(), local_next.begin(), local_next.end());
             }
+            local_next.clear();
         }
         q = next_q;
     }
