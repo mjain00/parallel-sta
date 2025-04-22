@@ -56,8 +56,9 @@ public:
     std::unordered_map<int, double> rc_delay_map; // node_id → RC delay
     std::vector<slewInfo> slew_value;
     std::vector<rcInfo> rc_value;
-
+    void topological_TaskGraph(DAG& dag,const std::map<int, Cell>& cell_map);
     std::map<std::string, std::vector<std::string>> taskGraph;
+    void processQueue(const std::string& task, DAG& dag,const std::map<int, Cell>& cell_map);
     void printTaskGraph();
 
 

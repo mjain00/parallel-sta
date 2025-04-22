@@ -61,7 +61,10 @@ int main(int argc, char** argv)
     start = high_resolution_clock::now();
     
     std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
+    cout << "*****************************************" << endl;
 
+    dag.topological_TaskGraph(dag, cell_map);
+    
     end = high_resolution_clock::now();
     duration = duration_cast<microseconds>(end - start).count();
     cout << "\n[Time] Topological Sort (Forward Pass): " << duration << " us" << endl;

@@ -163,6 +163,78 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
 }
 
 
+
+void DAG::topological_TaskGraph(DAG& dag,const std::map<int, Cell>& cell_map) {
+    std::queue<std::string> q;
+    std::map<std::string, int> inDegree;
+
+    // Initialize in-degree map
+    for (const auto& [task, deps] : taskGraph) {
+        if (!inDegree.count(task)) inDegree[task] = 0;
+        for (const std::string& dep : deps) {
+            inDegree[dep]++;
+        }
+    }
+
+    // Push all zero in-degree tasks
+    for (const auto& [task, deg] : inDegree) {
+        if (deg == 0) {
+            q.push(task);
+        }
+    }
+
+    while (!q.empty()) {
+        std::string current = q.front();
+        q.pop();
+
+        processQueue(current, dag,cell_map); // Process task logic
+
+        // Reduce in-degree of neighbors
+        for (const std::string& neighbor : taskGraph[current]) {
+            inDegree[neighbor]--;
+            if (inDegree[neighbor] == 0) {
+                q.push(neighbor);
+            }
+        }
+    }
+}
+
+
+void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cell>& cell_map) {
+    size_t sep = task.find('_');
+    int cell_id = std::stoi(task.substr(0, sep));
+    std::string stage = task.substr(sep + 1);
+
+    if (stage == "rc") {
+        for (int neighbor : adjList[cell_id]) {
+            if (cell_map.find((cell_id))!= cell_map.end() && cell_map.find(neighbor) != cell_map.end()) {
+                dag.computeRCDelay(cell_map.at(cell_id), cell_map.at(neighbor), cell_id, neighbor);
+            }
+        }
+    } 
+    else if (stage == "slew") {
+        for (int neighbor : adjList[cell_id]) {
+            if (cell_map.find((cell_id))!= cell_map.end() && cell_map.find(neighbor) != cell_map.end()) {
+                dag.computeSlewRate(cell_map.at(cell_id), cell_map.at(neighbor), cell_id, neighbor);
+            }
+
+        }
+    } 
+    else if (stage == "arrival") {
+
+        for (int neighbor : adjList[cell_id]) {
+            if (cell_map.find((cell_id))!= cell_map.end() && cell_map.find(neighbor) != cell_map.end()) {
+                dag.updateArrivalTime(neighbor, cell_id, cell_map);
+            }
+
+        }
+    } 
+    else {
+        std::cerr << "Unknown task type: " << task << std::endl;
+    }
+}
+
+
 void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map) {
     // Find the corresponding delay and slew between current -> neighbor
     double rc_delay = 0;
@@ -195,8 +267,7 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
 
     std::cout << "Updating arrival time for cell " << neighbor
                 << ": max(" << old_arrival << ", "
-                << new_arrival << " + " << total_delay
-                
+                << new_arrival
                 << ") = " << arrival_time[neighbor] << std::endl;
 
     return;
@@ -207,7 +278,7 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
 
 double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell, int current_cell_id, int neighboor_cell_id) {
     // Assuming voltage swing (V) is a constant value, e.g., 1V (you can adjust this value)
-    int rc_delay = 0;
+    double rc_delay = 0.0;
     double voltage_swing = 1.0; // V
     for (const auto& [from, to, rc_delay_value] : rc_value) {
         if (from == current_cell_id && to == neighboor_cell_id) {
@@ -227,7 +298,7 @@ double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,
     std::cout << "Computing Slew Rate: "
               << "Resistance of current cell = " << current_cell.resistance
               << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-              << " => Slew Rate = " << slew_rate << " V/s" << std::endl;
+              << " => Slew Rate = " << slew_time << " V/s" << std::endl;
 
     return slew_time;
 }
