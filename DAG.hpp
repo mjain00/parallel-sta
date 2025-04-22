@@ -49,7 +49,7 @@ public:
     std::unordered_map<int, float> analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted);
     std::unordered_map<int, double> rc_delay_map; // node_id → RC delay
     std::vector<DelaySlewInfo> delays_and_slews;
-    std::unordered_map<std::string, std::vector<std::string>> taskGraph;
+    std::map<std::string, std::vector<std::string>> taskGraph;
     void printTaskGraph();
 
 
