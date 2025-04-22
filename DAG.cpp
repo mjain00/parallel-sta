@@ -75,94 +75,159 @@ void DAG::removeCycles() {
     }
 }
 
+
 std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map) {
     std::unordered_map<int, int> inDegree;
     std::vector<int> result;
     std::queue<int> q;
+    std::cout << "WE HAVE MADE IT HER" << std::endl;
 
-    if (verbose) std::cout << "\n=== Step 1: Calculating in-degrees ===\n";
-
+    // Calculate in-degrees
     for (const auto& node : adjList) {
-        inDegree[node.first]; // defaults to 0 if not present
+        inDegree[node.first]; // Defaults to 0 if not present
         for (int neighbor : node.second) {
             inDegree[neighbor]++;
-            if (verbose) {
-                std::cout << "Edge: " << node.first << " -> " << neighbor 
-                          << " | Incrementing in-degree to " << inDegree[neighbor] << "\n";
-            }
         }
     }
 
-    if (verbose) std::cout << "\n=== Step 2: Enqueuing in-degree 0 nodes ===\n";
-
+    // Enqueue nodes with 0 in-degree
     for (const auto& [node, degree] : inDegree) {
         if (degree == 0) {
             q.push(node);
             arrival_time[node] = 0;
-            if (verbose) {
-                std::cout << "Enqueued node " << node << " | delay = 0\n";
-            }
         }
     }
 
-    if (verbose) std::cout << "\n=== Step 3: Processing queue ===\n";
-
+    // Process nodes and calculate RC delay
     while (!q.empty()) {
-        int current = q.front(); q.pop();
+        int current = q.front();
+        q.pop();
         result.push_back(current);
 
-        if (verbose) {
-            std::cout << "\nProcessing node " << current
-                      << " | accumulated delay = " << arrival_time[current] << "\n";
-        }
-
+        // For each outgoing connection from 'current', calculate RC delay
         for (int neighbor : adjList[current]) {
-            inDegree[neighbor]--;
-            updateArrivalTime(current, neighbor, cell_map);
+            // Check if current and neighbor are valid keys in the cell_map
+            if (cell_map.find(current) != cell_map.end() && cell_map.find(neighbor) != cell_map.end()) {
+                double rc_delay = computeRCDelay(cell_map.at(current), cell_map.at(neighbor));
+                // You can store this RC delay or use it to update other metrics
+            } else {
+                std::cerr << "These are signals - don't correspond to components" << std::endl;
+            }
 
+            // Decrease in-degree and enqueue if all dependencies are processed
+            inDegree[neighbor]--;
             if (inDegree[neighbor] == 0) {
                 q.push(neighbor);
-                if (verbose) {
-                    std::cout << "     Enqueued " << neighbor << " (in-degree now 0)\n";
-                }
             }
-        }
-    }
-
-    if (result.size() != inDegree.size()) {
-        std::cerr << "\nError: Graph has a cycle!\n";
-        return {};
-    }
-
-    if (verbose) {
-        std::cout << "\n=== Final Topological Order and Delays ===\n";
-        for (int node : result) {
-            std::cout << "Node " << node << " | Delay: " << arrival_time[node] << "\n";
         }
     }
 
     return result;
 }
 
+// Function to compute RC delay between two cells
+double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell) {
+    // Calculate RC delay based on the resistance and capacitance of both cells
+    double rc_delay = current_cell.resistance * neighbor_cell.capacitance;
 
-// Delay update function
-void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map) {
-    int oldDelay = arrival_time[neighbor];
-    int cellDelay = 0;
+    // Print RC delay
+    std::cout << "Computing RC Delay: "
+              << "Resistance of current cell = " << current_cell.id
+              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+              << " => RC Delay = " << rc_delay << std::endl;
 
-    if (cell_map.count(neighbor)) {
-        cellDelay = cell_map.at(neighbor).delay;
-    }
-
-    arrival_time[neighbor] = std::max(arrival_time[neighbor], arrival_time[current] + cellDelay);
-
-    if (verbose) {
-        std::cout << "  -> Visiting neighbor " << neighbor
-                  << ", delay update: max(" << oldDelay << ", "
-                  << arrival_time[current] << " + " << cellDelay
-                  << ") = " << arrival_time[neighbor] << "\n";
-    }
+    return rc_delay;
 }
+
+
+// std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map) {
+//     std::unordered_map<int, int> inDegree;
+//     std::vector<int> result;
+//     std::queue<int> q;
+
+//     if (verbose) std::cout << "\n=== Step 1: Calculating in-degrees ===\n";
+
+//     for (const auto& node : adjList) {
+//         inDegree[node.first]; // defaults to 0 if not present
+//         for (int neighbor : node.second) {
+//             inDegree[neighbor]++;
+//             if (verbose) {
+//                 std::cout << "Edge: " << node.first << " -> " << neighbor 
+//                           << " | Incrementing in-degree to " << inDegree[neighbor] << "\n";
+//             }
+//         }
+//     }
+
+//     if (verbose) std::cout << "\n=== Step 2: Enqueuing in-degree 0 nodes ===\n";
+
+//     for (const auto& [node, degree] : inDegree) {
+//         if (degree == 0) {
+//             q.push(node);
+//             arrival_time[node] = 0;
+//             if (verbose) {
+//                 std::cout << "Enqueued node " << node << " | delay = 0\n";
+//             }
+//         }
+//     }
+
+//     if (verbose) std::cout << "\n=== Step 3: Processing queue ===\n";
+
+//     while (!q.empty()) {
+//         int current = q.front(); q.pop();
+//         result.push_back(current);
+
+//         if (verbose) {
+//             std::cout << "\nProcessing node " << current
+//                       << " | accumulated delay = " << arrival_time[current] << "\n";
+//         }
+
+//         for (int neighbor : adjList[current]) {
+//             inDegree[neighbor]--;
+//             updateArrivalTime(current, neighbor, cell_map);
+
+//             if (inDegree[neighbor] == 0) {
+//                 q.push(neighbor);
+//                 if (verbose) {
+//                     std::cout << "     Enqueued " << neighbor << " (in-degree now 0)\n";
+//                 }
+//             }
+//         }
+//     }
+
+//     if (result.size() != inDegree.size()) {
+//         std::cerr << "\nError: Graph has a cycle!\n";
+//         return {};
+//     }
+
+//     if (verbose) {
+//         std::cout << "\n=== Final Topological Order and Delays ===\n";
+//         for (int node : result) {
+//             std::cout << "Node " << node << " | Delay: " << arrival_time[node] << "\n";
+//         }
+//     }
+
+//     return result;
+// }
+
+
+// // Delay update function
+// void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map) {
+//     int oldDelay = arrival_time[neighbor];
+//     int cellDelay = 0;
+
+//     if (cell_map.count(neighbor)) {
+//         cellDelay = cell_map.at(neighbor).delay;
+//     }
+
+//     arrival_time[neighbor] = std::max(arrival_time[neighbor], arrival_time[current] + cellDelay);
+
+//     if (verbose) {
+//         std::cout << "  -> Visiting neighbor " << neighbor
+//                   << ", delay update: max(" << oldDelay << ", "
+//                   << arrival_time[current] << " + " << cellDelay
+//                   << ") = " << arrival_time[neighbor] << "\n";
+//     }
+// }
 
 
 
