@@ -51,7 +51,7 @@ public:
     std::vector<int> topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map);   
     void updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map);
     double computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell,int current_id, int neighbor_id);
-    double computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,double rc_delay, int current_cell_id, int neighboor_cell_id);
+    double computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell, int current_cell_id, int neighboor_cell_id);
     std::unordered_map<int, float> analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted);
     std::unordered_map<int, double> rc_delay_map; // node_id → RC delay
     std::vector<slewInfo> slew_value;
