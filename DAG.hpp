@@ -27,6 +27,12 @@ private:
     void reverseList();
 
 public:
+    struct DelaySlewInfo {
+        int current_cell_id; // ID of the current cell
+        int neighbor_cell_id; // ID of the neighbor cell
+        double rc_delay; // RC delay value
+        double slew_rate; // Slew rate value
+    };
     // Adds a directed edge from 'from' node to 'to' node
     void addEdge(int from, int to);
 
@@ -42,6 +48,8 @@ public:
     double computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell);
     std::unordered_map<int, float> analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted);
     std::unordered_map<int, double> rc_delay_map; // node_id → RC delay
+    std::vector<DelaySlewInfo> delays_and_slews;
+
 
 };
 
