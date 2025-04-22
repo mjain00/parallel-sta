@@ -114,6 +114,7 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
     std::unordered_map<int, int> inDegree;
     std::vector<int> result;
     std::queue<int> q;
+    std::cout << "WE HAVE MADE IT HER" << std::endl;
 
     // Calculate in-degrees
     for (const auto& node : adjList) {
@@ -219,51 +220,6 @@ double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell)
     return rc_delay;
 }
 
-void DAG::sequentialProcess(const ASIC& asic, const std::map<int, Cell>& cell_map) {
-    std::unordered_map<int, int> inDegree;
-    std::queue<int> ready;
-
-    // Step 1: Compute in-degrees
-    for (const auto& [node, neighbors] : adjList) {
-        inDegree[node]; // ensure it's initialized
-        for (int neighbor : neighbors) {
-            inDegree[neighbor]++;
-        }
-    }
-
-    // Step 2: Find all nodes with in-degree 0
-    for (const auto& [node, degree] : inDegree) {
-        if (degree == 0) {
-            ready.push(node);
-            arrival_time[node] = 0; // Initialize arrival time for source nodes
-        }
-    }
-
-    // Step 3: Process nodes when they’re ready
-    while (!ready.empty()) {
-        int current = ready.front();
-        ready.pop();
-
-        for (int neighbor : adjList[current]) {
-            if (cell_map.count(current) && cell_map.count(neighbor)) {
-                double rc_delay = computeRCDelay(cell_map.at(current), cell_map.at(neighbor));
-                double slew_rate = computeSlewRate(cell_map.at(current), cell_map.at(neighbor), rc_delay);
-                delays_and_slews.push_back({current, neighbor, rc_delay, slew_rate});
-                updateArrivalTime(current, neighbor, cell_map);
-            } else {
-                std::cerr << "Signal edge, not a cell connection: " << current << " -> " << neighbor << "\n";
-            }
-
-            // Mark dependency as resolved
-            inDegree[neighbor]--;
-            if (inDegree[neighbor] == 0) {
-                ready.push(neighbor);
-            }
-        }
-    }
-}
-
-
 
 // std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map) {
 //     std::unordered_map<int, int> inDegree;
@@ -353,6 +309,26 @@ void DAG::sequentialProcess(const ASIC& asic, const std::map<int, Cell>& cell_ma
 //                   << ") = " << arrival_time[neighbor] << "\n";
 //     }
 // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
