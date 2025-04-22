@@ -169,11 +169,16 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
     // Find the corresponding delay and slew between current -> neighbor
     for (const auto& [from, to, rc_delay, slew] : delays_and_slews) {
         if (from == current && to == neighbor) {
-            double total_delay = rc_delay + slew;
+            double current_cell_delay = cell_map.at(current).delay;  // Assuming 'delay' is a member of 'Cell'
+            double neighbor_cell_delay = cell_map.at(neighbor).delay;  // Assuming 'delay' is a member of 'Cell'
+
+            // Calculate total delay as the sum of RC delay, slew rate, and component delays
+            double total_delay = rc_delay + slew + current_cell_delay + neighbor_cell_delay;
 
             double old_arrival = arrival_time[neighbor];
             double new_arrival = arrival_time[current] + total_delay;
 
+            // Update the neighbor's arrival time with the maximum of the old or new arrival time
             arrival_time[neighbor] = std::max(old_arrival, new_arrival);
 
             std::cout << "Updating arrival time for cell " << neighbor
