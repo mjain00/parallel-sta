@@ -168,17 +168,24 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
     // Find the corresponding delay and slew between current -> neighbor
     for (const auto& [from, to, rc_delay, slew] : delays_and_slews) {
         if (from == current && to == neighbor) {
-            double total_delay = rc_delay + slew;
+            // Fetch the component delays for the current and neighbor cells
+            double current_cell_delay = cell_map.at(current).delay;  // Assuming 'delay' is a member of 'Cell'
+            double neighbor_cell_delay = cell_map.at(neighbor).delay;  // Assuming 'delay' is a member of 'Cell'
+
+            // Calculate total delay as the sum of RC delay, slew rate, and component delays
+            double total_delay = rc_delay + slew + current_cell_delay + neighbor_cell_delay;
 
             double old_arrival = arrival_time[neighbor];
             double new_arrival = arrival_time[current] + total_delay;
-
+            std::cout << "The delay for rc and slew is " << slew << rc_delay << std::endl;
+            // Update the neighbor's arrival time with the maximum of the old or new arrival time
             arrival_time[neighbor] = std::max(old_arrival, new_arrival);
 
             std::cout << "Updating arrival time for cell " << neighbor
                       << ": max(" << old_arrival << ", "
-                      << arrival_time[current] << " + " << total_delay
+                      << new_arrival << " + " << total_delay
                       << ") = " << arrival_time[neighbor] << std::endl;
+
             return;
         }
     }
@@ -219,49 +226,6 @@ double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell)
     return rc_delay;
 }
 
-void DAG::sequentialProcess(const ASIC& asic, const std::map<int, Cell>& cell_map) {
-    std::unordered_map<int, int> inDegree;
-    std::queue<int> ready;
-
-    // Step 1: Compute in-degrees
-    for (const auto& [node, neighbors] : adjList) {
-        inDegree[node]; // ensure it's initialized
-        for (int neighbor : neighbors) {
-            inDegree[neighbor]++;
-        }
-    }
-
-    // Step 2: Find all nodes with in-degree 0
-    for (const auto& [node, degree] : inDegree) {
-        if (degree == 0) {
-            ready.push(node);
-            arrival_time[node] = 0; // Initialize arrival time for source nodes
-        }
-    }
-
-    // Step 3: Process nodes when they’re ready
-    while (!ready.empty()) {
-        int current = ready.front();
-        ready.pop();
-
-        for (int neighbor : adjList[current]) {
-            if (cell_map.count(current) && cell_map.count(neighbor)) {
-                double rc_delay = computeRCDelay(cell_map.at(current), cell_map.at(neighbor));
-                double slew_rate = computeSlewRate(cell_map.at(current), cell_map.at(neighbor), rc_delay);
-                delays_and_slews.push_back({current, neighbor, rc_delay, slew_rate});
-                updateArrivalTime(current, neighbor, cell_map);
-            } else {
-                std::cerr << "Signal edge, not a cell connection: " << current << " -> " << neighbor << "\n";
-            }
-
-            // Mark dependency as resolved
-            inDegree[neighbor]--;
-            if (inDegree[neighbor] == 0) {
-                ready.push(neighbor);
-            }
-        }
-    }
-}
 
 
 
