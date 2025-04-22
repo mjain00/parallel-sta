@@ -141,9 +141,8 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
         for (int neighbor : adjList[current]) {
             // Check if current and neighbor are valid keys in the cell_map
             if (cell_map.find(current) != cell_map.end() && cell_map.find(neighbor) != cell_map.end()) {
-                double rc_delay = computeRCDelay(cell_map.at(current), cell_map.at(neighbor));
-                double slew_rate = computeSlewRate(cell_map.at(current), cell_map.at(neighbor),rc_delay);
-                delays_and_slews.push_back({current, neighbor, rc_delay, slew_rate});
+                double rc_delay = computeRCDelay(cell_map.at(current), cell_map.at(neighbor),current, neighbor);
+                double slew_rate = computeSlewRate(cell_map.at(current), cell_map.at(neighbor),rc_delay,current, neighbor);
                 updateArrivalTime(current, neighbor, cell_map);
 
                 // You can store this RC delay or use it to update other metrics
@@ -166,35 +165,46 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
 
 void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map) {
     // Find the corresponding delay and slew between current -> neighbor
-    for (const auto& [from, to, rc_delay, slew] : delays_and_slews) {
+    double rc_delay = 0;
+    double slew = 0;
+    for (const auto& [from, to, rc_delay_value] : rc_value) {
         if (from == current && to == neighbor) {
-            // Fetch the component delays for the current and neighbor cells
-            double current_cell_delay = cell_map.at(current).delay;  // Assuming 'delay' is a member of 'Cell'
-            double neighbor_cell_delay = cell_map.at(neighbor).delay;  // Assuming 'delay' is a member of 'Cell'
+            rc_delay = rc_delay_value;
 
-            // Calculate total delay as the sum of RC delay, slew rate, and component delays
-            double total_delay = rc_delay + slew + current_cell_delay + neighbor_cell_delay;
-
-            double old_arrival = arrival_time[neighbor];
-            double new_arrival = arrival_time[current] + total_delay;
-            std::cout << "The delay for rc and slew is " << slew << rc_delay << std::endl;
-            // Update the neighbor's arrival time with the maximum of the old or new arrival time
-            arrival_time[neighbor] = std::max(old_arrival, new_arrival);
-
-            std::cout << "Updating arrival time for cell " << neighbor
-                      << ": max(" << old_arrival << ", "
-                      << new_arrival << " + " << total_delay
-                      << ") = " << arrival_time[neighbor] << std::endl;
-
-            return;
         }
     }
+    for (const auto& [from, to, slew_value_in] : slew_value) {
+        if (from == current && to == neighbor) {
+            slew = slew_value_in;
+
+        }
+    }
+
+    // Fetch the component delays for the current and neighbor cells
+    double current_cell_delay = cell_map.at(current).delay;  // Assuming 'delay' is a member of 'Cell'
+    double neighbor_cell_delay = cell_map.at(neighbor).delay;  // Assuming 'delay' is a member of 'Cell'
+
+    // Calculate total delay as the sum of RC delay, slew rate, and component delays
+    double total_delay = rc_delay + slew + current_cell_delay + neighbor_cell_delay;
+
+    double old_arrival = arrival_time[neighbor];
+    double new_arrival = arrival_time[current] + total_delay;
+    std::cout << "The delay for rc and slew is " << slew << rc_delay << std::endl;
+    // Update the neighbor's arrival time with the maximum of the old or new arrival time
+    arrival_time[neighbor] = std::max(old_arrival, new_arrival);
+
+    std::cout << "Updating arrival time for cell " << neighbor
+                << ": max(" << old_arrival << ", "
+                << new_arrival << " + " << total_delay
+                << ") = " << arrival_time[neighbor] << std::endl;
+
+    return;
 
     std::cerr << "Warning: No delay/slew entry found for edge " << current << " -> " << neighbor << std::endl;
 }
 
 
-double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,double rc_delay) {
+double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,double rc_delay, int current_cell_id, int neighboor_cell_id) {
     // Assuming voltage swing (V) is a constant value, e.g., 1V (you can adjust this value)
     double voltage_swing = 1.0; // V
 
@@ -202,6 +212,7 @@ double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,
     double rc_time_constant = rc_delay;
     double slew_rate = voltage_swing / rc_time_constant;
     double slew_time = voltage_swing / slew_rate; // (V / (V/s)) = seconds
+    slew_value.push_back({current_cell_id, neighboor_cell_id, slew_time});
 
     // Print Slew Rate
     std::cout << "Computing Slew Rate: "
@@ -213,9 +224,10 @@ double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,
 }
 
 // Function to compute RC delay between two cells
-double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell) {
+double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell,int current_id, int neighbor_id) {
     // Calculate RC delay based on the resistance and capacitance of both cells
     double rc_delay = current_cell.resistance * neighbor_cell.capacitance;
+    rc_value.push_back({current_id, neighbor_id, rc_delay});
 
     // Print RC delay
     std::cout << "Computing RC Delay: "
