@@ -164,52 +164,129 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
 
 
 
-std::vector<int> DAG::topological_TaskGraph(DAG& dag,const std::map<int, Cell>& cell_map) {
-    std::queue<std::string> q;
+std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>& cell_map) {
     std::map<std::string, int> inDegree;
     std::vector<int> result;
+    std::vector<std::string> q;
 
+    if (verbose) {
+        std::cout << "\n=== Step 1: Calculating in-degrees (TaskGraph) ===\n";
+    }
 
-    // Initialize in-degree map
     for (const auto& [task, deps] : taskGraph) {
         if (!inDegree.count(task)) inDegree[task] = 0;
         for (const std::string& dep : deps) {
             inDegree[dep]++;
-        }
-    }
-
-    // Push all zero in-degree tasks
-    for (const auto& [task, deg] : inDegree) {
-        if (deg == 0) {
-            q.push(task);
-        }
-    }
-
-    while (!q.empty()) {
-        std::string current = q.front();
-        q.pop();
-        size_t sep = current.find('_');
-        int cell_id = std::stoi(current.substr(0, sep));
-        result.push_back(cell_id);
-   
-        
-
-        processQueue(current, dag,cell_map); // Process task logic
-
-        // Reduce in-degree of neighbors
-        for (const std::string& neighbor : taskGraph[current]) {
-            inDegree[neighbor]--;
-            if (inDegree[neighbor] == 0) {
-                q.push(neighbor);
+            if (verbose) {
+                std::cout << "Edge: " << task << " -> " << dep 
+                          << " | Incrementing in-degree of " << dep 
+                          << " to " << inDegree[dep] << "\n";
             }
         }
     }
+
+    if (verbose) {
+        std::cout << "\n=== Step 2: Enqueuing in-degree 0 tasks ===\n";
+    }
+
+    for (const auto& [task, deg] : inDegree) {
+        if (deg == 0) {
+
+            q.push_back(task);
+            if (verbose) {
+                std::cout << "TID: " << omp_get_thread_num() 
+                          << " Enqueued task " << task 
+                          << " with in-degree 0\n";
+            }
+        }
+    }
+
+    if (verbose) {
+        std::cout << "\n=== Step 3: Processing task queue (parallel) ===\n";
+    }
+
+    while (!q.empty()) {
+        std::vector<std::string> next_q;
+        std::vector<std::string> q_copy = q;
+
+#pragma omp parallel
+        {
+            std::vector<std::string> local_next;
+#pragma omp for
+            for (int i = 0; i < q_copy.size(); ++i) {
+                std::string current = q_copy[i];
+                size_t sep = current.find('_');
+                int cell_id = std::stoi(current.substr(0, sep));
+
+#pragma omp critical
+                {
+                    result.push_back(cell_id);
+                }
+                if (verbose) {
+                    std::cout << "TID" << omp_get_thread_num()  <<"is processing task " << current << "\n";
+                }
+                dag.processQueue(current, dag, cell_map);
+
+                for (const std::string& neighbor : taskGraph[current]) {
+                    int new_in_degree;
+#pragma omp atomic capture
+                    new_in_degree = --inDegree[neighbor];
+
+                    if (verbose) {
+                        std::cout << "  -> Task " << neighbor 
+                                  << " new in-degree = " << new_in_degree << "\n";
+                    }
+
+                    if (new_in_degree == 0) {
+                        local_next.push_back(neighbor);
+                        if (verbose) {
+                            std::cout << "TID" << omp_get_thread_num()  <<"locally enqueued " << neighbor << "\n";
+                        }
+                    }
+                }
+            }
+
+#pragma omp critical
+            {
+                if (verbose) {
+                        std::cout << "TID " << omp_get_thread_num()  << " We are inserting into the queue" << "\n";
+                }        
+                next_q.insert(next_q.end(), local_next.begin(), local_next.end());
+            }
+            local_next.clear();
+        }
+        if (verbose) {
+            std::cout << "We have inserted into the queue" << "\n";
+        }
+
+        q = next_q;
+
+    }
+
+    if (result.empty()) {
+        std::cerr << "\nError: No tasks processed. Task graph might have a cycle.\n";
+        return {};
+    }
+
+    if (verbose) {
+        std::cout << "\n=== Final Task Order ===\n";
+        for (int node : result) {
+            std::cout << "Cell ID: " << node << "\n";
+        }
+    }
+
     return result;
 }
 
 
 void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cell>& cell_map) {
+    
     size_t sep = task.find('_');
+    if (sep == std::string::npos) {
+        std::cerr << "Malformed task: " << task << " (missing underscore '_')" << std::endl;
+        return;
+    }
+
     int cell_id = std::stoi(task.substr(0, sep));
     std::string stage = task.substr(sep + 1);
 
@@ -278,8 +355,10 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
 
     }
     // Update the neighbor's arrival time with the maximum of the old or new arrival time
+#pragma omp critcal
+{
     arrival_time[neighbor] = std::max(old_arrival, new_arrival);
-
+}
 
     return;
 
@@ -302,9 +381,10 @@ double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,
     double rc_time_constant = rc_delay;
     double slew_rate = voltage_swing / rc_time_constant;
     double slew_time = voltage_swing / slew_rate; // (V / (V/s)) = seconds
-
+#pragma omp critical
+{ 
     slew_value.push_back({current_cell_id, neighboor_cell_id, slew_time});
-
+}
     // Print Slew Rate
     if(verbose)
     {
@@ -320,8 +400,10 @@ double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,
 double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell,int current_id, int neighbor_id) {
     // Calculate RC delay based on the resistance and capacitance of both cells
     double rc_delay = current_cell.resistance * neighbor_cell.capacitance;
+#pragma omp critical
+{
     rc_value.push_back({current_id, neighbor_id, rc_delay});
-
+}
     // Print RC delay
 
     if(verbose){
