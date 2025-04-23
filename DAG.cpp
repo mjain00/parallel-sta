@@ -269,18 +269,21 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
 
     double old_arrival = arrival_time[neighbor];
     double new_arrival = arrival_time[current] + total_delay;
-    std::cout << "The delay for rc and slew is " << (rc_delay + slew)*10e9 << std::endl;
+    if(verbose){
+        std::cout << "The delay for rc and slew is " << (rc_delay + slew)*10e9 << std::endl;
+        std::cout << "Updating arrival time for cell " << neighbor
+        << ": max(" << old_arrival << ", "
+        << new_arrival
+        << ") = " << arrival_time[neighbor] << std::endl;
+
+    }
     // Update the neighbor's arrival time with the maximum of the old or new arrival time
     arrival_time[neighbor] = std::max(old_arrival, new_arrival);
 
-    std::cout << "Updating arrival time for cell " << neighbor
-                << ": max(" << old_arrival << ", "
-                << new_arrival
-                << ") = " << arrival_time[neighbor] << std::endl;
 
     return;
 
-    std::cerr << "Warning: No delay/slew entry found for edge " << current << " -> " << neighbor << std::endl;
+    // std::cerr << "Warning: No delay/slew entry found for edge " << current << " -> " << neighbor << std::endl;
 }
 
 
@@ -303,11 +306,13 @@ double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,
     slew_value.push_back({current_cell_id, neighboor_cell_id, slew_time});
 
     // Print Slew Rate
-    std::cout << "Computing Slew Rate: "
-              << "Resistance of current cell = " << current_cell.resistance
-              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-              << " => Slew Rate = " << slew_time << " V/s" << std::endl;
-
+    if(verbose)
+    {
+        std::cout << "Computing Slew Rate: "
+        << "Resistance of current cell = " << current_cell.resistance
+        << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+        << " => Slew Rate = " << slew_time << " V/s" << std::endl;
+    }
     return slew_time;
 }
 
@@ -318,11 +323,13 @@ double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell,
     rc_value.push_back({current_id, neighbor_id, rc_delay});
 
     // Print RC delay
-    std::cout << "Computing RC Delay: "
-              << "Resistance of current cell = " << current_cell.id
-              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-              << " => RC Delay = " << rc_delay << std::endl;
 
+    if(verbose){
+        std::cout << "Computing RC Delay: "
+        << "Resistance of current cell = " << current_cell.id
+        << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+        << " => RC Delay = " << rc_delay << std::endl;
+    }
     return rc_delay;
 }
 
