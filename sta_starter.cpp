@@ -56,14 +56,14 @@ int main(int argc, char** argv)
     dag.displayGraph(asic);
     dag.removeCycles();
     dag.createTaskGraph();
-    dag.printTaskGraph();
+    //dag.printTaskGraph();
 
     start = high_resolution_clock::now();
     
-    std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
-    cout << "*****************************************" << endl;
+    //std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
+    //cout << "*****************************************" << endl;
 
-    dag.topological_TaskGraph(dag, cell_map);
+    std::vector<int> sorted = dag.topological_TaskGraph(dag, cell_map);
     
     end = high_resolution_clock::now();
     duration = duration_cast<microseconds>(end - start).count();
