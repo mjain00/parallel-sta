@@ -29,6 +29,8 @@ int main(int argc, char** argv)
     auto start = high_resolution_clock::now();
 
     ASIC asic = parse_json(filename);
+    assign_rc_to_cells(asic);
+
     
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(end - start).count();
@@ -53,10 +55,16 @@ int main(int argc, char** argv)
     std::cout << "\nDAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
     dag.removeCycles();
+    dag.createTaskGraph();
+    //dag.printTaskGraph();
+
     start = high_resolution_clock::now();
     
-    std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
+    //std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
+    //cout << "*****************************************" << endl;
 
+    std::vector<int> sorted = dag.topological_TaskGraph(dag, cell_map);
+    
     end = high_resolution_clock::now();
     duration = duration_cast<microseconds>(end - start).count();
     cout << "\n[Time] Topological Sort (Forward Pass): " << duration << " us" << endl;
@@ -83,5 +91,5 @@ int main(int argc, char** argv)
 
         std::cout << std::endl;
     }
-    std::cout << "BYE!" << std::endl;
+    std::cout << "BYE! part1" << std::endl;
 }
