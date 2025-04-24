@@ -165,6 +165,7 @@ std::vector<int> DAG::topologicalSort(const ASIC &asic, const std::map<int, Cell
 #pragma omp parallel
         {
             std::vector<int> local_next;
+            std::vector<DelaySlewInfo> local_delays_and_slews;
 #pragma omp for
             for (int i = 0; i < q_copy.size(); i++)
             {
@@ -188,14 +189,14 @@ std::vector<int> DAG::topologicalSort(const ASIC &asic, const std::map<int, Cell
                     {
                         Cell current_cell = cell_map.at(current);
                         Cell neighbor_cell = cell_map.at(neighbor);
-
-#pragma omp critical
-                        {
-                            double rc_delay = computeRCDelay(current_cell, neighbor_cell);
-                            double slew_rate = computeSlewRate(current_cell, neighbor_cell, rc_delay);
-                            updateArrivalTime(current, neighbor, cell_map);
-                            delays_and_slews.push_back({current, neighbor, rc_delay, slew_rate});
-                        }
+                        double rc_delay = computeRCDelay(current_cell, neighbor_cell);
+                        double slew_rate = computeSlewRate(current_cell, neighbor_cell, rc_delay);
+                        updateArrivalTime(current, neighbor, cell_map);
+                        local_delays_and_slews.push_back({current, neighbor, rc_delay, slew_rate});
+// #pragma omp critical
+//                         {
+//                             delays_and_slews.push_back({current, neighbor, rc_delay, slew_rate});
+//                         }
 
                         // You can store this RC delay or use it to update other metrics
                     }
@@ -220,6 +221,7 @@ std::vector<int> DAG::topologicalSort(const ASIC &asic, const std::map<int, Cell
 #pragma omp critical
             {
                 next_q.insert(next_q.end(), local_next.begin(), local_next.end());
+                delays_and_slews.insert(delays_and_slews.end(), local_delays_and_slews.begin(), local_delays_and_slews.end());
             }
         }
         q = next_q;
@@ -245,7 +247,11 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
             double new_arrival = arrival_time[current] + total_delay;
 
             // Update the neighbor's arrival time with the maximum of the old or new arrival time
-            arrival_time[neighbor] = std::max(old_arrival, new_arrival);
+
+#pragma omp critical
+            {
+                arrival_time[neighbor] = std::max(old_arrival, new_arrival);
+            }
 
             if (verbose)
                 std::cout << "Updating arrival time for cell " << neighbor
