@@ -55,8 +55,8 @@ int main(int argc, char** argv)
     std::cout << "\nDAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
     dag.removeCycles();
-    dag.createTaskGraph();
-    dag.printTaskGraph();
+    // dag.createTaskGraph();
+    // dag.printTaskGraph();
 
     start = high_resolution_clock::now();
     
@@ -76,17 +76,17 @@ int main(int argc, char** argv)
 
     std::cout << "\nRESULTS:" << std::endl;
 
-    for (const auto& [net, s] : slack) {
-        std::string name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
-        std::cout << "Node " << name << " (ID: " << net << ") | Slack: " << s;
+    // for (const auto& [net, s] : slack) {
+    //     std::string name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
+    //     std::cout << "Node " << name << " (ID: " << net << ") | Slack: " << s;
 
-        if (s < 0) {
-            std::cout << " | Timing Violation!";
-        } else {
-            std::cout << " | Timing OK!";
-        }
+    //     if (s < 0) {
+    //         std::cout << " | Timing Violation!";
+    //     } else {
+    //         std::cout << " | Timing OK!";
+    //     }
 
-        std::cout << std::endl;
-    }
+    //     std::cout << std::endl;
+    // }
     std::cout << "BYE! part1" << std::endl;
 }
