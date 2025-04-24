@@ -56,8 +56,9 @@ int main(int argc, char** argv)
     dag.displayGraph(asic);
     dag.removeCycles();
     dag.createTaskGraph();
-    //dag.printTaskGraph();
 
+    //dag.printTaskGraph();
+    std::cout << "We are done with creating the task graph";
     start = high_resolution_clock::now();
     
     //std::vector<int> sorted = dag.topologicalSort(asic, cell_map);

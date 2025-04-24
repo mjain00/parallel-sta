@@ -12,7 +12,7 @@
 #include <map>
 #include <queue>
 #include <unordered_set>
-
+#include <omp.h>
 #include "ASIC.hpp" 
 #include "verbose.h"
 

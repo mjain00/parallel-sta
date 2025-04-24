@@ -23,6 +23,9 @@ void DAG::createTaskGraph()
         }
     }
     
+    std::cout << "We are done with task graph \n";
+
+    
 }
 
 void DAG::printTaskGraph() {
@@ -107,6 +110,9 @@ void DAG::removeCycles() {
             dfs(node);
         }
     }
+
+    std::cout << "We are done with back edge: " << "\n";
+
 }
 
 
@@ -260,6 +266,7 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
         }
 
         q = next_q;
+        next_q.clear();
 
     }
 
@@ -296,6 +303,9 @@ void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cel
                 dag.computeRCDelay(cell_map.at(cell_id), cell_map.at(neighbor), cell_id, neighbor);
             }
         }
+        if(verbose){
+            std::cout <<"We are done processing for arrival \n";
+        }
     } 
     else if (stage == "slew") {
         for (int neighbor : adjList[cell_id]) {
@@ -303,6 +313,10 @@ void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cel
                 dag.computeSlewRate(cell_map.at(cell_id), cell_map.at(neighbor), cell_id, neighbor);
             }
 
+        
+        }
+        if(verbose){
+            std::cout <<"We are done processing for arrival \n";
         }
     } 
     else if (stage == "arrival") {
@@ -311,8 +325,13 @@ void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cel
             if (cell_map.find((cell_id))!= cell_map.end() && cell_map.find(neighbor) != cell_map.end()) {
                 dag.updateArrivalTime(cell_id, neighbor, cell_map);
             }
+        
 
         }
+        if(verbose){
+            std::cout <<"We are done processing for arrival \n";
+        }
+    
     } 
     else {
         std::cerr << "Unknown task type: " << task << std::endl;
@@ -344,8 +363,13 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
     // Calculate total delay as the sum of RC delay, slew rate, and component delays
     double total_delay = (rc_delay + slew)*10e9 + neighbor_cell_delay;
 
+
+    // Update the neighbor's arrival time with the maximum of the old or new arrival time
+#pragma omp critcal
+{
     double old_arrival = arrival_time[neighbor];
     double new_arrival = arrival_time[current] + total_delay;
+    arrival_time[neighbor] = std::max(old_arrival, new_arrival);
     if(verbose){
         std::cout << "The delay for rc and slew is " << (rc_delay + slew)*10e9 << std::endl;
         std::cout << "Updating arrival time for cell " << neighbor
@@ -354,10 +378,6 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
         << ") = " << arrival_time[neighbor] << std::endl;
 
     }
-    // Update the neighbor's arrival time with the maximum of the old or new arrival time
-#pragma omp critcal
-{
-    arrival_time[neighbor] = std::max(old_arrival, new_arrival);
 }
 
     return;
