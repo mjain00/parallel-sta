@@ -6,32 +6,37 @@
 
 using namespace std::chrono;
 
-
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     std::cout << "Static Timing Analysis" << std::endl;
 
     string filename = "circuits/json/simple.json";
 
-    if (argc > 1 && argc < 4) {
-        for (int i = 1; i < argc; ++i) {
-            if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
+    if (argc > 1 && argc < 4)
+    {
+        for (int i = 1; i < argc; ++i)
+        {
+            if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0)
+            {
                 verbose = true;
-            } else {
+            }
+            else
+            {
                 filename = argv[i];
             }
         }
-    } else if (argc > 3) {
+    }
+    else if (argc > 3)
+    {
         std::cerr << "Usage: " << argv[0] << " [-v|--verbose] <filename>" << std::endl;
         return 1;
-    }    
-    
+    }
+
     auto start = high_resolution_clock::now();
 
     ASIC asic = parse_json(filename);
     assign_rc_to_cells(asic);
 
-    
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(end - start).count();
     cout << "\n[Time] Parsing JSON: " << duration << " us" << endl;
@@ -55,11 +60,11 @@ int main(int argc, char** argv)
     std::cout << "\nDAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
     dag.removeCycles();
-    dag.createTaskGraph();
-    dag.printTaskGraph();
+    // dag.createTaskGraph();
+    // dag.printTaskGraph();
 
     start = high_resolution_clock::now();
-    
+
     std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
 
     end = high_resolution_clock::now();
@@ -76,17 +81,21 @@ int main(int argc, char** argv)
 
     std::cout << "\nRESULTS:" << std::endl;
 
-    for (const auto& [net, s] : slack) {
+    for (const auto &[net, s] : slack)
+    {
         std::string name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
         std::cout << "Node " << name << " (ID: " << net << ") | Slack: " << s;
 
-        if (s < 0) {
+        if (s < 0)
+        {
             std::cout << " | Timing Violation!";
-        } else {
+        }
+        else
+        {
             std::cout << " | Timing OK!";
         }
 
         std::cout << std::endl;
     }
-    std::cout << "BYE! part1" << std::endl;
+    std::cout << "BYE!" << std::endl;
 }
