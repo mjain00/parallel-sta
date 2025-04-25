@@ -3,8 +3,7 @@
 #include <chrono>
 
 // Adds a directed edge from 'from' to 'to'
-void DAG::addEdge(int from, int to)
-{
+void DAG::addEdge(int from, int to) {
     adjList[from].push_back(to);
 }
 
@@ -46,18 +45,17 @@ void DAG::printTaskGraph() {
 void DAG::displayGraph(const ASIC& asic) {
     for (const auto& node : adjList) {
         // Get the net name from net_dict using the node's ID
-        std::string node_name = (asic.net_dict.find(node.first) != asic.net_dict.end())
-                                    ? asic.net_dict.at(node.first)
-                                    : "Unknown";
+        std::string node_name = (asic.net_dict.find(node.first) != asic.net_dict.end()) 
+                                ? asic.net_dict.at(node.first)
+                                : "Unknown";
 
         std::cout << "Node " << node_name << " (ID: " << node.first << ") has edges to: ";
 
-        for (const auto &neighbor : node.second)
-        {
+        for (const auto& neighbor : node.second) {
             // Get the neighbor's net name from net_dict
-            std::string neighbor_name = (asic.net_dict.find(neighbor) != asic.net_dict.end())
-                                            ? asic.net_dict.at(neighbor)
-                                            : "Unknown";
+            std::string neighbor_name = (asic.net_dict.find(neighbor) != asic.net_dict.end()) 
+                                        ? asic.net_dict.at(neighbor)
+                                        : "Unknown";
             std::cout << neighbor_name << " (ID: " << neighbor << ") ";
         }
 
@@ -66,48 +64,37 @@ void DAG::displayGraph(const ASIC& asic) {
 }
 
 // Builds the DAG from the ASIC structure (connecting inputs and outputs of cells)
-void DAG::buildFromASIC(const ASIC &asic)
-{
-    for (const auto &cell : asic.cells)
-    {
-        for (const auto &input : cell.inputs)
-        {
-            for (const auto &output : cell.outputs)
-            {
-                addEdge(input, output); // Create edges based on the cell's inputs and outputs
+void DAG::buildFromASIC(const ASIC& asic) {
+    for (const auto& cell : asic.cells) {
+        for (const auto& input : cell.inputs) {
+            for (const auto& output : cell.outputs) {
+                addEdge(input, output);  // Create edges based on the cell's inputs and outputs
             }
         }
     }
 }
 
-void DAG::removeCycles()
-{
+
+void DAG::removeCycles() {
     std::unordered_set<int> visited;
     std::unordered_set<int> recStack;
 
-    std::function<void(int)> dfs = [&](int node)
-    {
+    std::function<void(int)> dfs = [&](int node) {
         visited.insert(node);
         recStack.insert(node);
 
-        auto &neighbors = adjList[node]; // direct reference to the neighbor set
-        for (auto it = neighbors.begin(); it != neighbors.end();)
-        {
+        auto& neighbors = adjList[node]; // direct reference to the neighbor set
+        for (auto it = neighbors.begin(); it != neighbors.end(); ) {
             int neighbor = *it;
 
-            if (recStack.count(neighbor))
-            {
+            if (recStack.count(neighbor)) {
                 // Found a back edge → remove it
                 std::cout << "Removing back edge: " << node << " -> " << neighbor << "\n";
                 it = neighbors.erase(it); // erase and continue
-            }
-            else if (!visited.count(neighbor))
-            {
+            } else if (!visited.count(neighbor)) {
                 dfs(neighbor);
                 ++it;
-            }
-            else
-            {
+            } else {
                 ++it;
             }
         }
@@ -115,10 +102,8 @@ void DAG::removeCycles()
         recStack.erase(node);
     };
 
-    for (const auto &[node, _] : adjList)
-    {
-        if (!visited.count(node))
-        {
+    for (const auto& [node, _] : adjList) {
+        if (!visited.count(node)) {
             dfs(node);
         }
     }
@@ -383,96 +368,77 @@ double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell)
 
 
 
-void DAG::reverseList()
-{
-    for (const auto &[u, neighbors] : adjList)
-    {
-        for (int v : neighbors)
-        {
+void DAG::reverseList() {
+    for (const auto& [u, neighbors] : adjList) {
+        for (int v : neighbors) {
             reverseAdjList[v].push_back(u);
         }
     }
 }
 
-std::unordered_map<int, float> DAG::analyzeTiming(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<int> &sorted)
-{
+std::unordered_map<int, float> DAG::analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted) {
     std::unordered_map<int, int> required_time;
     std::unordered_map<int, float> slack;
 
     reverseList();
 
-    if (verbose)
-    {
+    if (verbose) {
         std::cout << "\n=== Step 1: Initializing required times at outputs ===\n";
     }
-
-    for (int output : asic.outputs)
-    {
+    
+    for (int output : asic.outputs) {
         required_time[output] = CLOCK_PERIOD - SETUP_TIME;
         std::string name = asic.net_dict.count(output) ? asic.net_dict.at(output) : "Unknown";
 
-        if (verbose)
-        {
+        if (verbose) {
             std::cout << "Output net " << name << " (ID: " << output << ") → Required time = "
-                      << required_time[output] << "\n";
-        }
+                  << required_time[output] << "\n";
+        }        
     }
 
-    if (verbose)
-    {
+    if (verbose) {
         std::cout << "\n=== Step 2: Propagating required times (backward) ===\n";
     }
-    for (auto it = sorted.rbegin(); it != sorted.rend(); ++it)
-    {
+    for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
         int current = *it;
 
-        if (required_time.find(current) == required_time.end())
-        {
-            required_time[current] = INT32_MAX;
+        if (required_time.find(current) == required_time.end()) {
+            required_time[current] = INT64_MAX;
         }
 
-        if (reverseAdjList.count(current))
-        {
-            for (int fanin : reverseAdjList[current])
-            {
+        if (reverseAdjList.count(current)) {
+            for (int fanin : reverseAdjList[current]) {
                 float cell_delay = 0.0f;
 
                 // delay from cell driving `current`
-                if (cell_map.count(current))
-                {
+                if (cell_map.count(current)) {
                     cell_delay = cell_map.at(current).delay;
                 }
 
                 int candidate_time = required_time[current] - cell_delay;
 
-                if (required_time.find(fanin) == required_time.end())
-                {
+                if (required_time.find(fanin) == required_time.end()) {
                     required_time[fanin] = candidate_time;
-                }
-                else
-                {
+                } else {
                     required_time[fanin] = std::min(required_time[fanin], candidate_time);
                 }
 
                 std::string fanin_name = asic.net_dict.count(fanin) ? asic.net_dict.at(fanin) : "Unknown";
 
-                if (verbose)
-                {
-                    std::cout << "  Fanin " << fanin_name << " (ID: " << fanin
-                              << ") → Required time updated to " << required_time[fanin]
-                              << " (via " << cell_delay << " delay)\n";
+                if (verbose) {
+                    std::cout << "  Fanin " << fanin_name << " (ID: " << fanin 
+                            << ") → Required time updated to " << required_time[fanin] 
+                            << " (via " << cell_delay << " delay)\n";
                 }
             }
         }
     }
 
-    if (verbose)
-    {
+    if (verbose) {
         std::cout << "\n=== Step 3: Slack Computation ===\n";
     }
-
-    for (int net : sorted)
-    {
+    
+    for (int net : sorted) {
         float at = arrival_time.count(net) ? arrival_time.at(net) : 0.0f;
         float rt = required_time.count(net) ? required_time[net] : CLOCK_PERIOD;
 
@@ -481,16 +447,15 @@ std::unordered_map<int, float> DAG::analyzeTiming(const ASIC &asic, const std::m
 
         std::string net_name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
 
-        if (verbose)
-        {
+        if (verbose) {
             std::cout << "Net " << net_name << " (ID: " << net << ")"
-                      << " | Arrival: " << at
-                      << " | Required: " << rt
-                      << " | Slack: " << s;
-            if (s < 0)
-                std::cout << " VIOLATION!";
-            else if (s == 0)
-                std::cout << " CRITICAL PATH";
+                  << " | Arrival: " << at
+                  << " | Required: " << rt
+                  << " | Slack: " << s;
+        if (s < 0)
+            std::cout << " VIOLATION!";
+        else if (s == 0)
+            std::cout << " CRITICAL PATH";
             std::cout << std::endl;
         }
     }
