@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 {
     std::cout << "Static Timing Analysis" << std::endl;
 
-    string filename = "circuits/json/simple.json";
+    string filename = "circuits/json/bigcircuit.json";
 
     if (argc > 1 && argc < 4) {
         for (int i = 1; i < argc; ++i) {
@@ -55,8 +55,13 @@ int main(int argc, char** argv)
     std::cout << "\nDAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
     dag.removeCycles();
+<<<<<<< Updated upstream
     // dag.createTaskGraph();
     // dag.printTaskGraph();
+=======
+    dag.createTaskGraph();
+    dag.printTaskGraph();
+>>>>>>> Stashed changes
 
     start = high_resolution_clock::now();
     

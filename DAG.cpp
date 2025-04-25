@@ -10,37 +10,30 @@ void DAG::addEdge(int from, int to)
 
 void DAG::createTaskGraph()
 {
-    for (const auto &[node, neighbors] : adjList)
-    {
+    for (const auto& [node, neighbors] : adjList) {
         std::string rc = std::to_string(node) + "_rc";
         std::string slew = std::to_string(node) + "_slew";
         std::string arr = std::to_string(node) + "_arrival";
-
+    
         taskGraph[rc].push_back(slew);
         taskGraph[slew].push_back(arr);
-
-        for (int neighbor : neighbors)
-        {
+    
+        for (int neighbor : neighbors) {
             std::string neighbor_rc = std::to_string(neighbor) + "_rc";
             taskGraph[arr].push_back(neighbor_rc);
         }
     }
+    
 }
 
-void DAG::printTaskGraph()
-{
+void DAG::printTaskGraph() {
     std::cout << "Task Graph Dependencies (DAG):\n";
-    for (const auto &[task, dependents] : taskGraph)
-    {
+    for (const auto& [task, dependents] : taskGraph) {
         std::cout << task << " -> ";
-        if (dependents.empty())
-        {
+        if (dependents.empty()) {
             std::cout << "{}";
-        }
-        else
-        {
-            for (const auto &dep : dependents)
-            {
+        } else {
+            for (const auto& dep : dependents) {
                 std::cout << dep << " ";
             }
         }
@@ -48,10 +41,10 @@ void DAG::printTaskGraph()
     }
 }
 
-void DAG::displayGraph(const ASIC &asic)
-{
-    for (const auto &node : adjList)
-    {
+
+
+void DAG::displayGraph(const ASIC& asic) {
+    for (const auto& node : adjList) {
         // Get the net name from net_dict using the node's ID
         std::string node_name = (asic.net_dict.find(node.first) != asic.net_dict.end())
                                     ? asic.net_dict.at(node.first)
@@ -131,142 +124,121 @@ void DAG::removeCycles()
     }
 }
 
-std::vector<int> DAG::topologicalSort(const ASIC &asic, const std::map<int, Cell> &cell_map)
-{
+
+std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map) {
     std::unordered_map<int, int> inDegree;
+    std::unordered_map<int, double> local_arrival_time;
     std::vector<int> result;
     std::vector<int> q;
 
-    // Calculate in-degrees
-    for (const auto &node : adjList)
-    {
-        inDegree[node.first]; // Defaults to 0 if not present
-        for (int neighbor : node.second)
-        {
+    // Step 1: Calculate in-degrees
+    for (const auto& node : adjList) {
+        if (!inDegree.count(node.first)) inDegree[node.first] = 0;
+        for (int neighbor : node.second) {
             inDegree[neighbor]++;
         }
     }
 
-    // Enqueue nodes with 0 in-degree
-    for (const auto &[node, degree] : inDegree)
-    {
-        if (degree == 0)
-        {
+    // Step 2: Enqueue all nodes with in-degree 0
+    for (const auto& [node, deg] : inDegree) {
+        if (deg == 0) {
             q.push_back(node);
-            arrival_time[node] = 0;
+            local_arrival_time[node] = 0.0;
         }
     }
 
-    std::vector<int> q_copy; // Copy for parallel processing
-    std::vector<int> next_q;
-    while (!q.empty())
-    {
-        q_copy = q;
+    while (!q.empty()) {
+        std::vector<int> next_q;
+        std::vector<int> q_copy = q;
+
 #pragma omp parallel
         {
             std::vector<int> local_next;
-            std::vector<DelaySlewInfo> local_delays_and_slews;
-#pragma omp for
-            for (int i = 0; i < q_copy.size(); i++)
-            {
-                int current = q_copy[i];
+            std::vector<std::tuple<int, int, double, double>> local_delays;
 
-                if (verbose)
-                {
-                    std::cout << "TID: " << omp_get_thread_num() << " Processing node: " << current << std::endl;
-                }
+#pragma omp for
+            for (int i = 0; i < q_copy.size(); ++i) {
+                int current = q_copy[i];
 
 #pragma omp critical
                 {
                     result.push_back(current);
                 }
 
-                // For each outgoing connection from 'current', calculate RC delay
-                for (int neighbor : adjList[current])
-                {
-                    // Check if current and neighbor are valid keys in the cell_map
-                    if (cell_map.find(current) != cell_map.end() && cell_map.find(neighbor) != cell_map.end())
-                    {
-                        Cell current_cell = cell_map.at(current);
-                        Cell neighbor_cell = cell_map.at(neighbor);
-                        double rc_delay = computeRCDelay(current_cell, neighbor_cell);
-                        double slew_rate = computeSlewRate(current_cell, neighbor_cell, rc_delay);
-                        // local_delays_and_slews.push_back({current, neighbor, rc_delay, slew_rate});
+                for (int neighbor : adjList.at(current)) {
+                    if (cell_map.find(current) != cell_map.end() && cell_map.find(neighbor) != cell_map.end()) {
+                        double rc_delay = computeRCDelay(cell_map.at(current), cell_map.at(neighbor));
+                        double slew = computeSlewRate(cell_map.at(current), cell_map.at(neighbor), rc_delay);
 #pragma omp critical
                         {
-                            delays_and_slews.push_back({current, neighbor, rc_delay, slew_rate});
+                            delays_and_slews.push_back({current, neighbor, rc_delay, slew});
                         }
-                        updateArrivalTime(current, neighbor, cell_map);
-                        // You can store this RC delay or use it to update other metrics
-                    }
-                    else
-                    {
-                        if (verbose)
-                            std::cerr << "These are signals - don't correspond to components" << std::endl;
+                        updateArrivalTime(current, neighbor, cell_map);  // Make this thread-safe or reduce inside parallel block
                     }
 
-                    // Decrease in-degree and enqueue if all dependencies are processed
+#pragma omp atomic
+                    --inDegree[neighbor];
 
-                    int next_indegree;
-#pragma omp atomic capture
-                    next_indegree = --inDegree[neighbor];
+                    int updated_deg;
+#pragma omp atomic read
+                    updated_deg = inDegree[neighbor];
 
-                    if (next_indegree == 0)
-                    {
+                    if (updated_deg == 0) {
                         local_next.push_back(neighbor);
                     }
                 }
             }
+
 #pragma omp critical
             {
                 next_q.insert(next_q.end(), local_next.begin(), local_next.end());
-                // delays_and_slews.insert(delays_and_slews.end(), local_delays_and_slews.begin(), local_delays_and_slews.end());
             }
         }
+
         q = next_q;
-        next_q.clear();
     }
+
+    if (result.empty()) {
+        std::cerr << "\nError: No nodes processed. Possible cycle in graph.\n";
+    }
+
     return result;
 }
 
-void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell> &cell_map)
-{
+
+void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map) {
     // Find the corresponding delay and slew between current -> neighbor
-    for (const auto &[from, to, rc_delay, slew] : delays_and_slews)
-    {
-        if (from == current && to == neighbor)
-        {
-            double current_cell_delay = cell_map.at(current).delay;   // Assuming 'delay' is a member of 'Cell'
-            double neighbor_cell_delay = cell_map.at(neighbor).delay; // Assuming 'delay' is a member of 'Cell'
+    for (const auto& [from, to, rc_delay, slew] : delays_and_slews) {
+        if (from == current && to == neighbor) {
+            double current_cell_delay = cell_map.at(current).delay;  // Assuming 'delay' is a member of 'Cell'
+            double neighbor_cell_delay = cell_map.at(neighbor).delay;  // Assuming 'delay' is a member of 'Cell'
 
             // Calculate total delay as the sum of RC delay, slew rate, and component delays
-            double total_delay = (rc_delay + slew) * 10e9 + neighbor_cell_delay;
-            double old_arrival;
-            double new_arrival;
-#pragma omp critical
+            double total_delay = (rc_delay + slew)*10e9 + neighbor_cell_delay;
+            #pragma omp critical
             {
-                old_arrival = arrival_time[neighbor];
-                new_arrival = arrival_time[current] + total_delay;
-
-                // Update the neighbor's arrival time with the maximum of the old or new arrival time
-
-                arrival_time[neighbor] = std::max(old_arrival, new_arrival);
+                if (arrival_time.find(neighbor) == arrival_time.end()) {
+                    arrival_time[neighbor] = 0;
+                }
+            
             }
+            
+            double old_arrival = arrival_time[neighbor];
+            double new_arrival = arrival_time[current] + total_delay;
 
-            if (verbose)
-                std::cout << "Updating arrival time for cell " << neighbor
-                          << ": max(" << old_arrival << ", "
-                          << arrival_time[current] << " + " << total_delay
-                          << ") = " << arrival_time[neighbor] << std::endl;
-            return;
+            // Update the neighbor's arrival time with the maximum of the old or new arrival time
+#pragma openmp critical
+            {
+            arrival_time[neighbor] = std::max(old_arrival, new_arrival);
+            }
         }
     }
 
-    // std::cerr << "Warning: No delay/slew entry found for edge " << current << " -> " << neighbor << std::endl;
+    std::cerr << "Warning: No delay/slew entry found for edge " << current << " -> " << neighbor << std::endl;
 }
 
-double DAG::computeSlewRate(const Cell &current_cell, const Cell &neighbor_cell, double rc_delay)
-{
+
+double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,double rc_delay) {
     // Assuming voltage swing (V) is a constant value, e.g., 1V (you can adjust this value)
     double voltage_swing = 1.0; // V
 
@@ -275,32 +247,141 @@ double DAG::computeSlewRate(const Cell &current_cell, const Cell &neighbor_cell,
     double slew_rate = voltage_swing / rc_time_constant;
     double slew_time = voltage_swing / slew_rate; // (V / (V/s)) = seconds
 
-    if (verbose)
-    {
-        std::cout << "Computing Slew Rate: "
-                  << "Resistance of current cell = " << current_cell.resistance
-                  << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-                  << " => Slew Rate = " << slew_rate << " V/s" << std::endl;
-    }
+    // Print Slew Rate
+    std::cout << "Computing Slew Rate: "
+              << "Resistance of current cell = " << current_cell.resistance
+              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+              << " => Slew Rate = " << slew_rate << " V/s" << std::endl;
+
     return slew_time;
 }
 
 // Function to compute RC delay between two cells
-double DAG::computeRCDelay(const Cell &current_cell, const Cell &neighbor_cell)
-{
+double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell) {
     // Calculate RC delay based on the resistance and capacitance of both cells
     double rc_delay = current_cell.resistance * neighbor_cell.capacitance;
 
-    if (verbose)
-    {
-        std::cout << "Computing RC Delay: "
-                  << "Resistance of current cell = " << current_cell.id
-                  << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-                  << " => RC Delay = " << rc_delay << std::endl;
-    }
+    // Print RC delay
+    std::cout << "Computing RC Delay: "
+              << "Resistance of current cell = " << current_cell.id
+              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+              << " => RC Delay = " << rc_delay << std::endl;
 
     return rc_delay;
 }
+
+
+// std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map) {
+//     std::unordered_map<int, int> inDegree;
+//     std::vector<int> result;
+//     std::queue<int> q;
+
+//     if (verbose) std::cout << "\n=== Step 1: Calculating in-degrees ===\n";
+
+//     for (const auto& node : adjList) {
+//         inDegree[node.first]; // defaults to 0 if not present
+//         for (int neighbor : node.second) {
+//             inDegree[neighbor]++;
+//             if (verbose) {
+//                 std::cout << "Edge: " << node.first << " -> " << neighbor 
+//                           << " | Incrementing in-degree to " << inDegree[neighbor] << "\n";
+//             }
+//         }
+//     }
+
+//     if (verbose) std::cout << "\n=== Step 2: Enqueuing in-degree 0 nodes ===\n";
+
+//     for (const auto& [node, degree] : inDegree) {
+//         if (degree == 0) {
+//             q.push(node);
+//             arrival_time[node] = 0;
+//             if (verbose) {
+//                 std::cout << "Enqueued node " << node << " | delay = 0\n";
+//             }
+//         }
+//     }
+
+//     if (verbose) std::cout << "\n=== Step 3: Processing queue ===\n";
+
+//     while (!q.empty()) {
+//         int current = q.front(); q.pop();
+//         result.push_back(current);
+
+//         if (verbose) {
+//             std::cout << "\nProcessing node " << current
+//                       << " | accumulated delay = " << arrival_time[current] << "\n";
+//         }
+
+//         for (int neighbor : adjList[current]) {
+//             inDegree[neighbor]--;
+//             updateArrivalTime(current, neighbor, cell_map);
+
+//             if (inDegree[neighbor] == 0) {
+//                 q.push(neighbor);
+//                 if (verbose) {
+//                     std::cout << "     Enqueued " << neighbor << " (in-degree now 0)\n";
+//                 }
+//             }
+//         }
+//     }
+
+//     if (result.size() != inDegree.size()) {
+//         std::cerr << "\nError: Graph has a cycle!\n";
+//         return {};
+//     }
+
+//     if (verbose) {
+//         std::cout << "\n=== Final Topological Order and Delays ===\n";
+//         for (int node : result) {
+//             std::cout << "Node " << node << " | Delay: " << arrival_time[node] << "\n";
+//         }
+//     }
+
+//     return result;
+// }
+
+
+// // Delay update function
+// void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map) {
+//     int oldDelay = arrival_time[neighbor];
+//     int cellDelay = 0;
+
+//     if (cell_map.count(neighbor)) {
+//         cellDelay = cell_map.at(neighbor).delay;
+//     }
+
+//     arrival_time[neighbor] = std::max(arrival_time[neighbor], arrival_time[current] + cellDelay);
+
+//     if (verbose) {
+//         std::cout << "  -> Visiting neighbor " << neighbor
+//                   << ", delay update: max(" << oldDelay << ", "
+//                   << arrival_time[current] << " + " << cellDelay
+//                   << ") = " << arrival_time[neighbor] << "\n";
+//     }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void DAG::reverseList()
 {
