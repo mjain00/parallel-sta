@@ -182,7 +182,9 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
     for (const auto& [task, deps] : taskGraph) {
         if (!inDegree.count(task)) inDegree[task] = 0;
         for (const std::string& dep : deps) {
+            if (!inDegree.count(dep)) inDegree[dep] = 0;
             inDegree[dep]++;
+    
             if (verbose) {
                 std::cout << "Edge: " << task << " -> " << dep 
                           << " | Incrementing in-degree of " << dep 
@@ -197,12 +199,11 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
 
     for (const auto& [task, deg] : inDegree) {
         if (deg == 0) {
-
             q.push_back(task);
             if (verbose) {
                 std::cout << "TID: " << omp_get_thread_num() 
-                          << " Enqueued task " << task 
-                          << " with in-degree 0\n";
+                          << " | Enqueued initial task: " << task 
+                          << " with in-degree = 0\n";
             }
         }
     }
@@ -215,12 +216,24 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
         std::vector<std::string> next_q;
         std::vector<std::string> q_copy = q;
 
+        if (verbose) {
+            std::cout << "\n-- New Iteration with " << q_copy.size() << " tasks in queue --\n";
+            for (const auto& task : q_copy) {
+                std::cout << "Task in queue: " << task << "\n";
+            }
+        }
+
 #pragma omp parallel
         {
+            // int thread_id = omp_get_thread_num();
+            // std::cout << "Thread " << thread_id << " starting\n";
+        
             std::vector<std::string> local_next;
+
 #pragma omp for
             for (int i = 0; i < q_copy.size(); ++i) {
                 std::string current = q_copy[i];
+
                 size_t sep = current.find('_');
                 int cell_id = std::stoi(current.substr(0, sep));
 
@@ -228,9 +241,13 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
                 {
                     result.push_back(cell_id);
                 }
+
                 if (verbose) {
-                    std::cout << "TID" << omp_get_thread_num()  <<"is processing task " << current << "\n";
+                    std::cout << "TID " << omp_get_thread_num() 
+                              << " | Processing task: " << current 
+                              << " | Cell ID: " << cell_id << "\n";
                 }
+
                 dag.processQueue(current, dag, cell_map);
 
                 for (const std::string& neighbor : taskGraph[current]) {
@@ -239,14 +256,16 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
                     new_in_degree = --inDegree[neighbor];
 
                     if (verbose) {
-                        std::cout << "  -> Task " << neighbor 
-                                  << " new in-degree = " << new_in_degree << "\n";
+                        std::cout << "TID " << omp_get_thread_num() 
+                                  << " | Processed edge: " << current << " -> " << neighbor 
+                                  << " | New in-degree of " << neighbor << " = " << new_in_degree << "\n";
                     }
 
                     if (new_in_degree == 0) {
                         local_next.push_back(neighbor);
                         if (verbose) {
-                            std::cout << "TID" << omp_get_thread_num()  <<"locally enqueued " << neighbor << "\n";
+                            std::cout << "TID " << omp_get_thread_num() 
+                                      << " | Enqueuing " << neighbor << " into local next queue\n";
                         }
                     }
                 }
@@ -255,28 +274,32 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
 #pragma omp critical
             {
                 if (verbose) {
-                        std::cout << "TID " << omp_get_thread_num()  << " We are inserting into the queue" << "\n";
-                }        
+                    std::cout << "TID " << omp_get_thread_num() 
+                              << " | Merging " << local_next.size() << " tasks into global next queue\n";
+                }
                 next_q.insert(next_q.end(), local_next.begin(), local_next.end());
             }
+
             local_next.clear();
+            // std::cout << "Thread " << thread_id << " finished\n";
+
         }
+
         if (verbose) {
-            std::cout << "We have inserted into the queue" << "\n";
+            std::cout << "-- End of iteration. Total tasks queued for next round: " << next_q.size() << "\n";
         }
 
         q = next_q;
         next_q.clear();
-
     }
 
     if (result.empty()) {
-        std::cerr << "\nError: No tasks processed. Task graph might have a cycle.\n";
+        std::cerr << "\nError: No tasks processed. Possible cycle in task graph.\n";
         return {};
     }
 
     if (verbose) {
-        std::cout << "\n=== Final Task Order ===\n";
+        std::cout << "\n=== Final Task Order (Topologically Sorted) ===\n";
         for (int node : result) {
             std::cout << "Cell ID: " << node << "\n";
         }
@@ -284,7 +307,6 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
 
     return result;
 }
-
 
 void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cell>& cell_map) {
     
@@ -304,7 +326,7 @@ void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cel
             }
         }
         if(verbose){
-            std::cout <<"We are done processing for arrival \n";
+            std::cout <<"We are done processing for rc \n";
         }
     } 
     else if (stage == "slew") {
@@ -316,7 +338,7 @@ void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cel
         
         }
         if(verbose){
-            std::cout <<"We are done processing for arrival \n";
+            std::cout <<"We are done processing for slew \n";
         }
     } 
     else if (stage == "arrival") {
@@ -362,13 +384,21 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
 
     // Calculate total delay as the sum of RC delay, slew rate, and component delays
     double total_delay = (rc_delay + slew)*10e9 + neighbor_cell_delay;
+#pragma omp critical
+{
+    if (arrival_time.find(neighbor) == arrival_time.end()) {
+        arrival_time[neighbor] = 0;
+    }
+
+}
+    double old_arrival = arrival_time[neighbor];
+    double new_arrival = arrival_time[current] + total_delay;
+
 
 
     // Update the neighbor's arrival time with the maximum of the old or new arrival time
-#pragma omp critcal
+#pragma omp critical
 {
-    double old_arrival = arrival_time[neighbor];
-    double new_arrival = arrival_time[current] + total_delay;
     arrival_time[neighbor] = std::max(old_arrival, new_arrival);
     if(verbose){
         std::cout << "The delay for rc and slew is " << (rc_delay + slew)*10e9 << std::endl;
