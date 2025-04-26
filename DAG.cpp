@@ -239,7 +239,7 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
                 string stage = (current.substr(sep+1));
 
                 if(stage == "arrival"){
-                    #pragma omp critical
+#pragma omp critical
                     {
                         result.push_back(cell_id);
                     }
