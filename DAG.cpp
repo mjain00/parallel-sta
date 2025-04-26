@@ -236,11 +236,18 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
 
                 size_t sep = current.find('_');
                 int cell_id = std::stoi(current.substr(0, sep));
+                string stage = (current.substr(sep+1));
 
-#pragma omp critical
-                {
-                    result.push_back(cell_id);
+                if(stage == "arrival"){
+                    #pragma omp critical
+                    {
+                        result.push_back(cell_id);
+                    }
                 }
+// #pragma omp critical
+//                 {
+//                     result.push_back(cell_id);
+//                 }
 
                 if (verbose) {
                     std::cout << "TID " << omp_get_thread_num() 
