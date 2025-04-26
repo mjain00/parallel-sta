@@ -11,6 +11,7 @@
 #include <map>
 #include <queue>
 #include <unordered_set>
+#include <omp.h>
 
 #include "ASIC.hpp"
 #include "verbose.h"
@@ -23,6 +24,10 @@ private:
     std::unordered_map<int, float> arrival_time;
     // Function to reverse the adjacency list
     void reverseList();
+    void propogateRC(int node, const std::map<int, Cell> &cell_map);
+    void propogateSlew(int node, const std::map<int, Cell> &cell_map);
+    void propogateArrivalTime(int node, const std::map<int, Cell> &cell_map);
+    void propogateDelay(int node, const std::map<int, Cell> &cell_map);
 
 public:
     struct DelaySlewInfo
@@ -31,6 +36,13 @@ public:
         int neighbor_cell_id; // ID of the neighbor cell
         double rc_delay;      // RC delay value
         double slew_rate;     // Slew rate value
+    };
+
+    struct EdgeTiming
+    {
+        double rc_delay;
+        double slew_rate;
+        double total_delay;
     };
     // Adds a directed edge from 'from' node to 'to' node
     void addEdge(int from, int to);
@@ -44,13 +56,13 @@ public:
     void removeCycles(); // Performs topological sort on the DAG and returns the sorted order
     std::vector<int> topologicalSort(const ASIC &asic, const std::map<int, Cell> &cell_map);
     std::vector<std::vector<int>> createLevelList(const ASIC &asic, const std::map<int, Cell> &cell_map);
-    void propogateDelay(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> &level_list);
+    void forwardPropogation(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> level_list);
     void updateArrivalTime(int current, int neighbor, const std::map<int, Cell> &cell_map);
     double computeRCDelay(const Cell &current_cell, const Cell &neighbor_cell);
     double computeSlewRate(const Cell &current_cell, const Cell &neighbor_cell, double rc_delay);
     std::unordered_map<int, float> analyzeTiming(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<int> &sorted);
     std::unordered_map<int, float> calculateSlack(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> &level_list);
-    std::unordered_map<int, double> rc_delay_map; // node_id → RC delay
+    std::unordered_map<int, std::unordered_map<int, EdgeTiming>> edge_timings; // node_id → RC delay
     std::vector<DelaySlewInfo> delays_and_slews;
     std::map<std::string, std::vector<std::string>> taskGraph;
     void printTaskGraph();

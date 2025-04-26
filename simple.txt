@@ -1,0 +1,118 @@
+Static Timing Analysis
+JSON file successfully parsed.
+
+[Time] Parsing JSON: 501 us
+ASIC Details:
+
+
+Cell List:
+Cell ID: 8
+Cell Type: 4
+Delay: 12
+Resistance: 200
+Cap: 5e-13
+Inputs: 6 7 
+Outputs: 8 
+
+Cell ID: 4
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 8 
+Outputs: 4 
+
+Cell ID: 6
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 2 
+Outputs: 6 
+
+Cell ID: 7
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 3 
+Outputs: 7 
+
+IO list:
+Inputs: 2 3 
+Outputs: 4 
+
+Paths: 
+
+Net Mappings:
+[2] -> a
+[3] -> b
+[4] -> x
+[5] -> clk
+[6] -> a_
+[7] -> b_
+[8] -> $abc$89$0\x[0:0]
+
+[Time] Creating Cell Map: 3 us
+
+[Time] Building DAG: 4 us
+
+DAG Representation of the ASIC:
+Node a (ID: 2) has edges to: a_ (ID: 6) 
+Node b (ID: 3) has edges to: b_ (ID: 7) 
+Node a_ (ID: 6) has edges to: $abc$89$0\x[0:0] (ID: 8) 
+Node b_ (ID: 7) has edges to: $abc$89$0\x[0:0] (ID: 8) 
+Node $abc$89$0\x[0:0] (ID: 8) has edges to: x (ID: 4) 
+Computing RC Delay: Resistance of current cell = 7, Capacitance of neighbor cell = 5e-13 => RC Delay = 8.75e-11
+Computing Slew Rate: Resistance of current cell = 175, Capacitance of neighbor cell = 5e-13 => Slew Rate = 1.14286e+10 V/s
+Updating arrival time for cell 8: max(0, 0 + 13.75) = 13.75
+Computing RC Delay: Resistance of current cell = 6, Capacitance of neighbor cell = 5e-13 => RC Delay = 8.75e-11
+Computing Slew Rate: Resistance of current cell = 175, Capacitance of neighbor cell = 5e-13 => Slew Rate = 1.14286e+10 V/s
+Updating arrival time for cell 8: max(13.75, 0 + 13.75) = 13.75
+Computing RC Delay: Resistance of current cell = 8, Capacitance of neighbor cell = 4.5e-13 => RC Delay = 9e-11
+Computing Slew Rate: Resistance of current cell = 200, Capacitance of neighbor cell = 4.5e-13 => Slew Rate = 1.11111e+10 V/s
+Updating arrival time for cell 4: max(0, 13.75 + 0.8) = 14.55
+Computing RC Delay: Resistance of current cell = 6, Capacitance of neighbor cell = 5e-13 => RC Delay = 8.75e-11
+Computing Slew Rate: Resistance of current cell = 175, Capacitance of neighbor cell = 5e-13 => Slew Rate = 1.14286e+10 V/s
+Updating arrival time for cell 8: max(13.75, 0 + 13.75) = 13.75
+Computing RC Delay: Resistance of current cell = 7, Capacitance of neighbor cell = 5e-13 => RC Delay = 8.75e-11
+Computing Slew Rate: Resistance of current cell = 175, Capacitance of neighbor cell = 5e-13 => Slew Rate = 1.14286e+10 V/s
+Updating arrival time for cell 8: max(13.75, 0 + 13.75) = 13.75
+Computing RC Delay: Resistance of current cell = 8, Capacitance of neighbor cell = 4.5e-13 => RC Delay = 9e-11
+Computing Slew Rate: Resistance of current cell = 200, Capacitance of neighbor cell = 4.5e-13 => Slew Rate = 1.11111e+10 V/s
+Updating arrival time for cell 4: max(14.55, 13.75 + 0.8) = 14.55
+
+[Time] Topological Sort (Forward Pass): 85 us
+Level 0: 2 3 
+Level 1: 6 7 
+Level 2: 8 
+Level 3: 4 
+
+=== Step 1: Initializing required times at outputs ===
+Output net x (ID: 4) → Required time = 42
+
+=== Step 2: Propagating required times (backward) ===
+  Fanin $abc$89$0\x[0:0] (ID: 8) → Required time updated to 43 (via -1 delay)
+  Fanin a_ (ID: 6) → Required time updated to 31 (via 12 delay)
+  Fanin b_ (ID: 7) → Required time updated to 31 (via 12 delay)
+  Fanin a (ID: 2) → Required time updated to 32 (via -1 delay)
+  Fanin b (ID: 3) → Required time updated to 32 (via -1 delay)
+
+=== Step 3: Slack Computation ===
+Net b (ID: 3) | Arrival: 0 | Required: 32 | Slack: 32
+Net a (ID: 2) | Arrival: 0 | Required: 32 | Slack: 32
+Net b_ (ID: 7) | Arrival: 0 | Required: 31 | Slack: 31
+Net a_ (ID: 6) | Arrival: 0 | Required: 31 | Slack: 31
+Net $abc$89$0\x[0:0] (ID: 8) | Arrival: 13.75 | Required: 43 | Slack: 29.25
+Net x (ID: 4) | Arrival: 14.55 | Required: 42 | Slack: 27.45
+
+[Time] Analyze Timing (Backward Pass): 68 us
+
+RESULTS:
+Node x (ID: 4) | Slack: 27.45 | Timing OK!
+Node $abc$89$0\x[0:0] (ID: 8) | Slack: 29.25 | Timing OK!
+Node a_ (ID: 6) | Slack: 31 | Timing OK!
+Node b_ (ID: 7) | Slack: 31 | Timing OK!
+Node a (ID: 2) | Slack: 32 | Timing OK!
+Node b (ID: 3) | Slack: 32 | Timing OK!
+BYE!

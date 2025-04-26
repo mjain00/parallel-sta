@@ -1,0 +1,145 @@
+Static Timing Analysis
+JSON file successfully parsed.
+
+[Time] Parsing JSON: 1905 us
+ASIC Details:
+
+
+Cell List:
+Cell ID: 11
+Cell Type: 4
+Delay: 12
+Resistance: 200
+Cap: 5e-13
+Inputs: 9 10 
+Outputs: 11 
+
+Cell ID: 12
+Cell Type: 7
+Delay: 12
+Resistance: 150
+Cap: 4e-13
+Inputs: 9 10 
+Outputs: 12 
+
+Cell ID: 13
+Cell Type: 2
+Delay: 9
+Resistance: 150
+Cap: 4e-13
+Inputs: 9 10 
+Outputs: 13 
+
+Cell ID: 14
+Cell Type: 3
+Delay: 9
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 9 10 
+Outputs: 14 
+
+Cell ID: 7
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 12 
+Outputs: 7 
+
+Cell ID: 4
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 11 
+Outputs: 4 
+
+Cell ID: 5
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 13 
+Outputs: 5 
+
+Cell ID: 6
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 14 
+Outputs: 6 
+
+Cell ID: 9
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 2 
+Outputs: 9 
+
+Cell ID: 10
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 3 
+Outputs: 10 
+
+IO list:
+Inputs: 2 3 
+Outputs: 4 5 6 7 
+
+Paths: 
+
+Net Mappings:
+[2] -> a
+[3] -> b
+[4] -> w
+[5] -> x
+[6] -> y
+[7] -> z
+[8] -> clk
+[9] -> a_
+[10] -> b_
+[11] -> $abc$105$0\w[0:0]
+[12] -> $abc$105$0\z[0:0]
+[13] -> $abc$105$0\x[0:0]
+[14] -> $abc$105$0\y[0:0]
+
+[Time] Creating Cell Map: 7 us
+
+[Time] Building DAG: 7 us
+
+DAG Representation of the ASIC:
+Node a (ID: 2) has edges to: a_ (ID: 9) 
+Node b (ID: 3) has edges to: b_ (ID: 10) 
+Node a_ (ID: 9) has edges to: $abc$105$0\w[0:0] (ID: 11) $abc$105$0\z[0:0] (ID: 12) $abc$105$0\x[0:0] (ID: 13) $abc$105$0\y[0:0] (ID: 14) 
+Node b_ (ID: 10) has edges to: $abc$105$0\w[0:0] (ID: 11) $abc$105$0\z[0:0] (ID: 12) $abc$105$0\x[0:0] (ID: 13) $abc$105$0\y[0:0] (ID: 14) 
+Node $abc$105$0\w[0:0] (ID: 11) has edges to: w (ID: 4) 
+Node $abc$105$0\z[0:0] (ID: 12) has edges to: z (ID: 7) 
+Node $abc$105$0\x[0:0] (ID: 13) has edges to: x (ID: 5) 
+Node $abc$105$0\y[0:0] (ID: 14) has edges to: y (ID: 6) 
+
+[Time] Topological Sort (Forward Pass): 585 us
+Level 0: size: 2: 2 3 
+Level 1: size: 2: 9 10 
+Level 2: size: 4: 14 13 12 11 
+Level 3: size: 4: 6 5 7 4 
+
+[Time] Analyze Timing (Backward Pass): 47 us
+
+RESULTS:
+Node w (ID: 4) | Slack: 27.45 | Timing OK!
+Node z (ID: 7) | Slack: 28.25 | Timing OK!
+Node x (ID: 5) | Slack: 31.25 | Timing OK!
+Node y (ID: 6) | Slack: 30.85 | Timing OK!
+Node $abc$105$0\w[0:0] (ID: 11) | Slack: 29.25 | Timing OK!
+Node $abc$105$0\z[0:0] (ID: 12) | Slack: 29.6 | Timing OK!
+Node $abc$105$0\x[0:0] (ID: 13) | Slack: 32.6 | Timing OK!
+Node $abc$105$0\y[0:0] (ID: 14) | Slack: 32.425 | Timing OK!
+Node b_ (ID: 10) | Slack: 31 | Timing OK!
+Node a_ (ID: 9) | Slack: 31 | Timing OK!
+Node b (ID: 3) | Slack: 32 | Timing OK!
+Node a (ID: 2) | Slack: 32 | Timing OK!
+BYE!

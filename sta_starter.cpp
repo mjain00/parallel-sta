@@ -62,12 +62,12 @@ int main(int argc, char **argv)
     dag.removeCycles();
     // dag.createTaskGraph();
     // dag.printTaskGraph();
-    // std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
+
     std::vector<std::vector<int>> level_list = dag.createLevelList(asic, cell_map);
 
     start = high_resolution_clock::now();
-
-    dag.propogateDelay(asic, cell_map, level_list);
+    // std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
+    dag.forwardPropogation(asic, cell_map, level_list);
 
     end = high_resolution_clock::now();
     duration = duration_cast<microseconds>(end - start).count();

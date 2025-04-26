@@ -1,0 +1,305 @@
+Static Timing Analysis
+JSON file successfully parsed.
+
+[Time] Parsing JSON: 2352 us
+ASIC Details:
+
+
+Cell List:
+Cell ID: 15
+Cell Type: 5
+Delay: 13
+Resistance: 100
+Cap: 3e-13
+Inputs: 13 14 
+Outputs: 15 
+
+Cell ID: 18
+Cell Type: 7
+Delay: 12
+Resistance: 150
+Cap: 4e-13
+Inputs: 16 17 
+Outputs: 18 
+
+Cell ID: 19
+Cell Type: 4
+Delay: 12
+Resistance: 200
+Cap: 5e-13
+Inputs: 18 15 
+Outputs: 19 
+
+Cell ID: 20
+Cell Type: 5
+Delay: 13
+Resistance: 100
+Cap: 3e-13
+Inputs: 16 17 
+Outputs: 20 
+
+Cell ID: 21
+Cell Type: 3
+Delay: 9
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 18 15 
+Outputs: 21 
+
+Cell ID: 22
+Cell Type: 5
+Delay: 13
+Resistance: 100
+Cap: 3e-13
+Inputs: 21 20 
+Outputs: 22 
+
+Cell ID: 25
+Cell Type: 4
+Delay: 12
+Resistance: 200
+Cap: 5e-13
+Inputs: 23 24 
+Outputs: 25 
+
+Cell ID: 26
+Cell Type: 4
+Delay: 12
+Resistance: 200
+Cap: 5e-13
+Inputs: 25 22 
+Outputs: 26 
+
+Cell ID: 27
+Cell Type: 4
+Delay: 12
+Resistance: 200
+Cap: 5e-13
+Inputs: 13 14 
+Outputs: 27 
+
+Cell ID: 28
+Cell Type: 2
+Delay: 9
+Resistance: 150
+Cap: 4e-13
+Inputs: 25 22 
+Outputs: 28 
+
+Cell ID: 29
+Cell Type: 2
+Delay: 9
+Resistance: 150
+Cap: 4e-13
+Inputs: 23 24 
+Outputs: 29 
+
+Cell ID: 30
+Cell Type: 3
+Delay: 9
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 29 28 
+Outputs: 30 
+
+Cell ID: 24
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 7 
+Outputs: 24 
+
+Cell ID: 8
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 27 
+Outputs: 8 
+
+Cell ID: 9
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 19 
+Outputs: 9 
+
+Cell ID: 10
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 26 
+Outputs: 10 
+
+Cell ID: 11
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 30 
+Outputs: 11 
+
+Cell ID: 13
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 2 
+Outputs: 13 
+
+Cell ID: 16
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 3 
+Outputs: 16 
+
+Cell ID: 23
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 4 
+Outputs: 23 
+
+Cell ID: 14
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 5 
+Outputs: 14 
+
+Cell ID: 17
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 6 
+Outputs: 17 
+
+IO list:
+Inputs: 2 3 4 5 6 7 
+Outputs: 8 9 10 11 
+
+Paths: 
+
+Net Mappings:
+[2] -> a[0]
+[3] -> a[1]
+[4] -> a[2]
+[5] -> b[0]
+[6] -> b[1]
+[7] -> b[2]
+[8] -> x[0]
+[9] -> x[1]
+[10] -> x[2]
+[11] -> x[3]
+[12] -> clk
+[13] -> a_[0]
+[14] -> b_[0]
+[15] -> $abc$161$new_n11
+[16] -> a_[1]
+[17] -> b_[1]
+[18] -> $abc$161$new_n12
+[19] -> $auto$alumacc.cc:485:replace_alu$6.Y[1]
+[20] -> $abc$161$new_n14
+[21] -> $abc$161$new_n15
+[22] -> $abc$161$new_n16
+[23] -> a_[2]
+[24] -> b_[2]
+[25] -> $abc$161$new_n17
+[26] -> $auto$alumacc.cc:485:replace_alu$6.Y[2]
+[27] -> $auto$alumacc.cc:485:replace_alu$6.Y[0]
+[28] -> $abc$161$new_n20
+[29] -> $abc$161$new_n21
+[30] -> $auto$alumacc.cc:485:replace_alu$6.Y[3]
+[31] -> $abc$148$new_n11
+[32] -> $abc$148$new_n12
+[33] -> $abc$148$new_n14
+[34] -> $abc$148$new_n15
+[35] -> $abc$148$new_n16
+[36] -> $abc$148$new_n17
+[37] -> $abc$148$new_n20
+[38] -> $abc$148$new_n21
+[39] -> $auto$alumacc.cc:485:replace_alu$6.CO[0]
+[40] -> $auto$alumacc.cc:485:replace_alu$6.CO[1]
+[41] -> $auto$alumacc.cc:485:replace_alu$6.X[1]
+[42] -> $auto$alumacc.cc:485:replace_alu$6.X[2]
+
+[Time] Creating Cell Map: 14 us
+
+[Time] Building DAG: 18 us
+
+DAG Representation of the ASIC:
+Node a[0] (ID: 2) has edges to: a_[0] (ID: 13) 
+Node a[1] (ID: 3) has edges to: a_[1] (ID: 16) 
+Node a[2] (ID: 4) has edges to: a_[2] (ID: 23) 
+Node b[0] (ID: 5) has edges to: b_[0] (ID: 14) 
+Node b[1] (ID: 6) has edges to: b_[1] (ID: 17) 
+Node b[2] (ID: 7) has edges to: b_[2] (ID: 24) 
+Node a_[0] (ID: 13) has edges to: $abc$161$new_n11 (ID: 15) $auto$alumacc.cc:485:replace_alu$6.Y[0] (ID: 27) 
+Node b_[0] (ID: 14) has edges to: $abc$161$new_n11 (ID: 15) $auto$alumacc.cc:485:replace_alu$6.Y[0] (ID: 27) 
+Node $abc$161$new_n11 (ID: 15) has edges to: $auto$alumacc.cc:485:replace_alu$6.Y[1] (ID: 19) $abc$161$new_n15 (ID: 21) 
+Node a_[1] (ID: 16) has edges to: $abc$161$new_n12 (ID: 18) $abc$161$new_n14 (ID: 20) 
+Node b_[1] (ID: 17) has edges to: $abc$161$new_n12 (ID: 18) $abc$161$new_n14 (ID: 20) 
+Node $abc$161$new_n12 (ID: 18) has edges to: $auto$alumacc.cc:485:replace_alu$6.Y[1] (ID: 19) $abc$161$new_n15 (ID: 21) 
+Node $auto$alumacc.cc:485:replace_alu$6.Y[1] (ID: 19) has edges to: x[1] (ID: 9) 
+Node $abc$161$new_n14 (ID: 20) has edges to: $abc$161$new_n16 (ID: 22) 
+Node $abc$161$new_n15 (ID: 21) has edges to: $abc$161$new_n16 (ID: 22) 
+Node $abc$161$new_n16 (ID: 22) has edges to: $auto$alumacc.cc:485:replace_alu$6.Y[2] (ID: 26) $abc$161$new_n20 (ID: 28) 
+Node a_[2] (ID: 23) has edges to: $abc$161$new_n17 (ID: 25) $abc$161$new_n21 (ID: 29) 
+Node b_[2] (ID: 24) has edges to: $abc$161$new_n17 (ID: 25) $abc$161$new_n21 (ID: 29) 
+Node $abc$161$new_n17 (ID: 25) has edges to: $auto$alumacc.cc:485:replace_alu$6.Y[2] (ID: 26) $abc$161$new_n20 (ID: 28) 
+Node $auto$alumacc.cc:485:replace_alu$6.Y[2] (ID: 26) has edges to: x[2] (ID: 10) 
+Node $auto$alumacc.cc:485:replace_alu$6.Y[0] (ID: 27) has edges to: x[0] (ID: 8) 
+Node $abc$161$new_n20 (ID: 28) has edges to: $auto$alumacc.cc:485:replace_alu$6.Y[3] (ID: 30) 
+Node $abc$161$new_n21 (ID: 29) has edges to: $auto$alumacc.cc:485:replace_alu$6.Y[3] (ID: 30) 
+Node $auto$alumacc.cc:485:replace_alu$6.Y[3] (ID: 30) has edges to: x[3] (ID: 11) 
+
+[Time] Topological Sort (Forward Pass): 852 us
+Level 0: size: 6: 2 3 4 5 6 7 
+Level 1: size: 6: 16 17 13 23 14 24 
+Level 2: size: 6: 29 25 20 18 27 15 
+Level 3: size: 3: 21 19 8 
+Level 4: size: 2: 22 9 
+Level 5: size: 2: 28 26 
+Level 6: size: 2: 30 10 
+Level 7: size: 1: 11 
+
+[Time] Analyze Timing (Backward Pass): 82 us
+
+RESULTS:
+Node x[3] (ID: 11) | Slack: -16.725 | Timing Violation!
+Node x[2] (ID: 10) | Slack: -9.8 | Timing Violation!
+Node $auto$alumacc.cc:485:replace_alu$6.Y[3] (ID: 30) | Slack: -15.15 | Timing Violation!
+Node $auto$alumacc.cc:485:replace_alu$6.Y[2] (ID: 26) | Slack: -8 | Timing Violation!
+Node $abc$161$new_n20 (ID: 28) | Slack: -13.8 | Timing Violation!
+Node x[1] (ID: 9) | Slack: 14.15 | Timing OK!
+Node $abc$161$new_n16 (ID: 22) | Slack: -13 | Timing Violation!
+Node x[0] (ID: 8) | Slack: 27.45 | Timing OK!
+Node $auto$alumacc.cc:485:replace_alu$6.Y[1] (ID: 19) | Slack: 15.95 | Timing OK!
+Node $abc$161$new_n15 (ID: 21) | Slack: -11.95 | Timing Violation!
+Node $abc$161$new_n11 (ID: 15) | Slack: -11.05 | Timing Violation!
+Node $auto$alumacc.cc:485:replace_alu$6.Y[0] (ID: 27) | Slack: 29.25 | Timing OK!
+Node $abc$161$new_n12 (ID: 18) | Slack: -10.4 | Timing Violation!
+Node $abc$161$new_n14 (ID: 20) | Slack: -2.05 | Timing Violation!
+Node $abc$161$new_n17 (ID: 25) | Slack: 11.25 | Timing OK!
+Node a[0] (ID: 2) | Slack: -9 | Timing Violation!
+Node a[1] (ID: 3) | Slack: -8 | Timing Violation!
+Node a_[1] (ID: 16) | Slack: -9 | Timing Violation!
+Node $abc$161$new_n21 (ID: 29) | Slack: 23.6 | Timing OK!
+Node a[2] (ID: 4) | Slack: 14 | Timing OK!
+Node b_[1] (ID: 17) | Slack: -9 | Timing Violation!
+Node b[0] (ID: 5) | Slack: -9 | Timing Violation!
+Node b[1] (ID: 6) | Slack: -8 | Timing Violation!
+Node b[2] (ID: 7) | Slack: 14 | Timing OK!
+Node a_[0] (ID: 13) | Slack: -10 | Timing Violation!
+Node a_[2] (ID: 23) | Slack: 13 | Timing OK!
+Node b_[0] (ID: 14) | Slack: -10 | Timing Violation!
+Node b_[2] (ID: 24) | Slack: 13 | Timing OK!
+BYE!

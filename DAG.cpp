@@ -185,25 +185,151 @@ std::vector<std::vector<int>> DAG::createLevelList(const ASIC &asic, const std::
     return levelList;
 }
 
-void DAG::propogateDelay(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> &level_list)
+void DAG::propogateRC(int node, const std::map<int, Cell> &cell_map)
 {
-    for (int i = 0; i < level_list.size(); ++i)
+    // std::cout << "TID: " << omp_get_thread_num() << " - in propRC for node: " << node << std::endl;
+    if (cell_map.find(node) == cell_map.end())
+        return;
+
+    for (int neighbor : adjList[node])
     {
-        for (const auto &node : level_list[i])
+        if (cell_map.find(neighbor) == cell_map.end())
+            continue;
+
+        double rc_delay = computeRCDelay(cell_map.at(node), cell_map.at(neighbor));
+
+#pragma omp critical
         {
-            for (int neighbor : adjList[node])
+            edge_timings[node][neighbor].rc_delay = rc_delay;
+            // std::cout << "TID: " << omp_get_thread_num() << " - updating rc delay map for node: " << node << " to " << rc_delay << std::endl;
+        }
+    }
+}
+
+void DAG::propogateSlew(int node, const std::map<int, Cell> &cell_map)
+{
+    // std::cout << "TID: " << omp_get_thread_num() << " - in propSlew for node: " << node << std::endl;
+    if (cell_map.find(node) == cell_map.end())
+        return;
+
+    for (int neighbor : adjList[node])
+    {
+        if (cell_map.find(neighbor) == cell_map.end())
+            continue;
+
+        double rc_delay = 0.0;
+#pragma omp critical
+        {
+            rc_delay = edge_timings[node][neighbor].rc_delay;
+        }
+
+        // std::cout << "TID: " << omp_get_thread_num() << " - in propSlew RC delay for node: " << node << " is: " << rc_delay << std::endl;
+
+        double slew_rate = computeSlewRate(cell_map.at(node), cell_map.at(neighbor), rc_delay);
+
+#pragma omp critical
+        {
+            edge_timings[node][neighbor].slew_rate = slew_rate;
+            // std::cout << "TID: " << omp_get_thread_num() << " - Propagating Slew for node: " << node << std::endl;
+        }
+    }
+}
+
+void DAG::propogateArrivalTime(int node, const std::map<int, Cell> &cell_map)
+{
+    // std::cout << "TID: " << omp_get_thread_num() << " - in propArrivalTime for node: " << node << std::endl;
+    if (cell_map.find(node) == cell_map.end())
+        return;
+
+    for (int neighbor : adjList[node])
+    {
+        if (cell_map.find(neighbor) == cell_map.end())
+            continue;
+        EdgeTiming et;
+
+#pragma omp critical
+        {
+            et = edge_timings[node][neighbor];
+        }
+        double cell_delay = cell_map.at(neighbor).delay;
+
+        double total_delay = (et.rc_delay + et.slew_rate) * 10e9 + cell_delay;
+
+        #pragma omp critical
+        {
+            double old_arrival = arrival_time[neighbor];
+            double new_arrival = arrival_time[node] + total_delay;
+
+            // Update the neighbor's arrival time with the maximum of the old or new arrival time
+            arrival_time[neighbor] = std::max(old_arrival, new_arrival);
+            if (verbose)
+                std::cout << "Updating arrival time for cell " << neighbor
+                          << ": max(" << old_arrival << ", "
+                          << arrival_time[node] << " + " << total_delay
+                          << ") = " << arrival_time[neighbor] << std::endl;
+        }
+        
+        // updateArrivalTime(node, neighbor, cell_map);
+        // std::cout << "TID: " << omp_get_thread_num() << " - Propagating Arrival Time for node: " << node << std::endl;
+    }
+}
+
+void DAG::forwardPropogation(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> level_list)
+{
+    int l_min = 0;
+    int l_max = level_list.size() - 1;
+    while (l_max >= 0 && level_list[l_max].empty())
+    {
+        --l_max;
+    }
+
+    // std::cout << "lmin: " << l_min << " lmax: " << l_max << std::endl;
+    std::vector<int> rc_dep(l_max + 1, 0);
+    std::vector<int> slew_dep(l_max + 1, 0);
+
+#pragma omp parallel num_threads(16)
+    {
+#pragma omp single
+        { // master thread creates task s
+            // std::cout << "TID: " << omp_get_thread_num() << " creating tasks " << std::endl;
+            for (int i = l_min; i < l_max + 2; ++i)
             {
-                if (cell_map.find(node) != cell_map.end() && cell_map.find(neighbor) != cell_map.end())
+                if (i <= l_max)
                 {
-                    double rc_delay = computeRCDelay(cell_map.at(node), cell_map.at(neighbor));
-                    double slew_rate = computeSlewRate(cell_map.at(node), cell_map.at(neighbor), rc_delay);
-                    delays_and_slews.push_back({node, neighbor, rc_delay, slew_rate});
-                    updateArrivalTime(node, neighbor, cell_map);
+                    for (int u : level_list[i])
+                    {
+                        // std::cout << "task - Propagating RC for node: " << u << std::endl;
+#pragma omp task firstprivate(u, i) // depend(out : rc_dep.data()[i])
+                        {
+                            propogateRC(u, cell_map);
+                        }
+                    }
                 }
-                else
+
+                if (i - 1 >= l_min)
                 {
-                    std::cerr << "These are signals - don't correspond to components" << std::endl;
+                    for (int u : level_list[i - 1])
+                    {
+                        // std::cout << "Task - Propagating Slew for node: " << u << " in level " << (i - 1) << std::endl;
+#pragma omp task firstprivate(u, i) // depend(in: rc_dep.data()[i]) depend(out: slew_dep.data()[i]) //depend(inout : i) // depend(in : level_list[i]) depend(out : level_list[i - 1])
+                        {
+                            propogateSlew(u, cell_map);
+                        }
+                    }
                 }
+
+                if (i - 2 >= l_min)
+                {
+                    for (int u : level_list[i - 2])
+                    {
+                        // std::cout << "Task - Propagating Arrival Time for node: " << u << " in level " << (i - 1) << std::endl;
+#pragma omp task firstprivate(u, i) // depend(in: slew_dep.data()[i - 2]) //depend(inout : i) // depend(in : level_list[i]) depend(out : level_list[i - 2])
+                        {
+                            propogateArrivalTime(u, cell_map);
+                        }
+                    }
+                }
+#pragma omp taskwait
             }
         }
     }
@@ -278,23 +404,25 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
     {
         if (from == current && to == neighbor)
         {
-            double current_cell_delay = cell_map.at(current).delay;   // Assuming 'delay' is a member of 'Cell'
-            double neighbor_cell_delay = cell_map.at(neighbor).delay; // Assuming 'delay' is a member of 'Cell'
+            double current_cell_delay = cell_map.at(current).delay;
+            double neighbor_cell_delay = cell_map.at(neighbor).delay;
 
-            // Calculate total delay as the sum of RC delay, slew rate, and component delays
             double total_delay = (rc_delay + slew) * 10e9 + neighbor_cell_delay;
+            double old_arrival;
+            double new_arrival;
+#pragma omp critical
+            {
+                old_arrival = arrival_time[neighbor];
+                new_arrival = arrival_time[current] + total_delay;
 
-            double old_arrival = arrival_time[neighbor];
-            double new_arrival = arrival_time[current] + total_delay;
-
-            // Update the neighbor's arrival time with the maximum of the old or new arrival time
-            arrival_time[neighbor] = std::max(old_arrival, new_arrival);
-
-            if (verbose)
+                // Update the neighbor's arrival time with the maximum of the old or new arrival time
+                arrival_time[neighbor] = std::max(old_arrival, new_arrival);
+                if (verbose)
                 std::cout << "Updating arrival time for cell " << neighbor
                           << ": max(" << old_arrival << ", "
                           << arrival_time[current] << " + " << total_delay
                           << ") = " << arrival_time[neighbor] << std::endl;
+            }           
             return;
         }
     }
@@ -368,11 +496,12 @@ std::unordered_map<int, float> DAG::calculateSlack(const ASIC &asic, const std::
         }
     }
 
-    for (int i = level_list.size() - 1; i >= 0; i--) {
+    for (int i = level_list.size() - 1; i >= 0; i--)
+    {
         for (auto it = level_list[i].rbegin(); it != level_list[i].rend(); ++it)
         {
             int current = *it;
-            std::cout << "Current node: " << current << std::endl;
+            // std::cout << "Current node: " << current << std::endl;
 
             if (required_time.find(current) == required_time.end())
             {
