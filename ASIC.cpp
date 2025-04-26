@@ -18,6 +18,9 @@ void display_asic(const ASIC &asic)
         cout << "Cell ID: " << cell.id << endl;
         cout << "Cell Type: " << static_cast<int>(cell.type) << endl;
         cout << "Delay: " << cell.delay << endl;
+        cout << "Resistance: " << cell.resistance << endl;
+        cout << "Cap: " << cell.capacitance<< endl;
+
         cout << "Inputs: ";
         for (const auto &input : cell.inputs)
         {
@@ -67,6 +70,91 @@ map<int, Cell> create_cell_map(const vector<Cell>& cells) {
     }
     return cell_map;
 }
+
+std::unordered_map<CellType, std::pair<double, double>> get_rc_values() {
+    using CT = CellType;
+    std::unordered_map<CellType, std::pair<double, double>> rc_values = {
+        {CT::AND,        {150, 0.4e-12}},
+        {CT::AND2_X2,    {125, 0.35e-12}},
+        {CT::AND2_X4,    {150, 0.4e-12}},
+        {CT::AND3_X2,    {175, 0.45e-12}},
+        {CT::AND3_X4,    {200, 0.5e-12}},
+        {CT::AND4_X2,    {100, 0.3e-12}},
+        {CT::AND4_X4,    {125, 0.35e-12}},
+        {CT::AOI211_X2,  {150, 0.4e-12}},
+        {CT::AOI21_X2,   {175, 0.45e-12}},
+        {CT::AOI21_X4,   {200, 0.5e-12}},
+        {CT::AOI221_X2,  {100, 0.3e-12}},
+        {CT::AOI222_X1,  {125, 0.35e-12}},
+        {CT::AOI222_X2,  {150, 0.4e-12}},
+        {CT::AOI22_X2,   {175, 0.45e-12}},
+        {CT::CLKBUF_X1,  {200, 0.5e-12}},
+        {CT::CLKBUF_X2,  {100, 0.3e-12}},
+        {CT::DFFR_X1,    {125, 0.35e-12}},
+        {CT::DFFR_X2,    {150, 0.4e-12}},
+        {CT::DFFS_X2,    {175, 0.45e-12}},
+        {CT::DFF_P,      {175, 0.45e-12}},
+        {CT::DFF_PN0,    {200, 0.5e-12}},
+        {CT::DFF_X1,     {200, 0.5e-12}},
+        {CT::DFF_X2,     {100, 0.3e-12}},
+        {CT::HA_X1,      {125, 0.35e-12}},
+        {CT::INV_X1,     {150, 0.4e-12}},
+        {CT::INV_X16,    {175, 0.45e-12}},
+        {CT::INV_X2,     {200, 0.5e-12}},
+        {CT::INV_X32,    {100, 0.3e-12}},
+        {CT::INV_X4,     {125, 0.35e-12}},
+        {CT::INV_X8,     {150, 0.4e-12}},
+        {CT::MUX,        {100, 0.3e-12}},
+        {CT::MUX2_X1,    {175, 0.45e-12}},
+        {CT::NAND,       {100, 0.3e-12}},
+        {CT::NAND2_X1,   {200, 0.5e-12}},
+        {CT::NAND2_X2,   {100, 0.3e-12}},
+        {CT::NAND2_X4,   {125, 0.35e-12}},
+        {CT::NAND3_X2,   {150, 0.4e-12}},
+        {CT::NAND3_X4,   {175, 0.45e-12}},
+        {CT::NAND4_X2,   {200, 0.5e-12}},
+        {CT::NOR,        {125, 0.35e-12}},
+        {CT::NOR2_X2,    {100, 0.3e-12}},
+        {CT::NOR2_X4,    {125, 0.35e-12}},
+        {CT::NOR3_X2,    {150, 0.4e-12}},
+        {CT::NOR3_X4,    {175, 0.45e-12}},
+        {CT::NOR4_X2,    {200, 0.5e-12}},
+        {CT::NOT,        {125, 0.35e-12}},
+        {CT::OAI211_X2,  {100, 0.3e-12}},
+        {CT::OAI21_X2,   {125, 0.35e-12}},
+        {CT::OAI221_X2,  {150, 0.4e-12}},
+        {CT::OAI222_X2,  {175, 0.45e-12}},
+        {CT::OAI22_X1,   {200, 0.5e-12}},
+        {CT::OAI22_X2,   {100, 0.3e-12}},
+        {CT::OR,         {175, 0.45e-12}},
+        {CT::OR2_X2,     {125, 0.35e-12}},
+        {CT::OR2_X4,     {150, 0.4e-12}},
+        {CT::SDFFR_X2,   {175, 0.45e-12}},
+        {CT::SDFF_X2,    {200, 0.5e-12}},
+        {CT::XNOR,       {150, 0.4e-12}},
+        {CT::XNOR2_X2,   {100, 0.3e-12}},
+        {CT::XOR,        {200, 0.5e-12}},
+        {CT::XOR2_X2,    {125, 0.35e-12}},
+        {CT::UNKNOWN,    {100, 0.3e-12}}
+    };
+    return rc_values;
+}
+
+void assign_rc_to_cells(ASIC& asic) {
+    auto rc_map = get_rc_values();
+    for (auto& cell : asic.cells) {
+        auto it = rc_map.find(cell.type);
+        if (it != rc_map.end()) {
+            cell.resistance = it->second.first;
+            cell.capacitance = it->second.second;
+        } else {
+            cell.resistance = 100;       // fallback/default
+            cell.capacitance = 0.3e-12;
+        }
+    }
+}
+
+
 
 
 CellType parse_cell_type(const std::string &type_str)

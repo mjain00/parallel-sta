@@ -1,0 +1,370 @@
+{
+  "creator": "Yosys 0.36+3 (git sha1 a53032104, aarch64-apple-darwin20.2-clang 10.0.0-4ubuntu1 -fPIC -Os)",
+  "modules": {
+    "multiout": {
+      "attributes": {
+        "top": "00000000000000000000000000000001",
+        "src": "multiout.sv:3.1-21.10"
+      },
+      "ports": {
+        "a": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "b": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "w": {
+          "direction": "output",
+          "bits": [ 4 ]
+        },
+        "x": {
+          "direction": "output",
+          "bits": [ 5 ]
+        },
+        "y": {
+          "direction": "output",
+          "bits": [ 6 ]
+        },
+        "z": {
+          "direction": "output",
+          "bits": [ 7 ]
+        },
+        "clk": {
+          "direction": "input",
+          "bits": [ 8 ]
+        }
+      },
+      "cells": {
+        "$abc$105$auto$blifparse.cc:386:parse_blif$106": {
+          "hide_name": 1,
+          "type": "$_XOR_",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 9 ],
+            "B": [ 10 ],
+            "Y": [ 11 ]
+          }
+        },
+        "$abc$105$auto$blifparse.cc:386:parse_blif$107": {
+          "hide_name": 1,
+          "type": "$_XNOR_",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 9 ],
+            "B": [ 10 ],
+            "Y": [ 12 ]
+          }
+        },
+        "$abc$105$auto$blifparse.cc:386:parse_blif$108": {
+          "hide_name": 1,
+          "type": "$_AND_",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 9 ],
+            "B": [ 10 ],
+            "Y": [ 13 ]
+          }
+        },
+        "$abc$105$auto$blifparse.cc:386:parse_blif$109": {
+          "hide_name": 1,
+          "type": "$_OR_",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 9 ],
+            "B": [ 10 ],
+            "Y": [ 14 ]
+          }
+        },
+        "$auto$ff.cc:266:slice$94": {
+          "hide_name": 1,
+          "type": "$_DFF_P_",
+          "parameters": {
+          },
+          "attributes": {
+            "always_ff": "00000000000000000000000000000001",
+            "src": "multiout.sv:11.5-19.8"
+          },
+          "port_directions": {
+            "C": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 8 ],
+            "D": [ 12 ],
+            "Q": [ 7 ]
+          }
+        },
+        "$auto$ff.cc:266:slice$95": {
+          "hide_name": 1,
+          "type": "$_DFF_P_",
+          "parameters": {
+          },
+          "attributes": {
+            "always_ff": "00000000000000000000000000000001",
+            "src": "multiout.sv:11.5-19.8"
+          },
+          "port_directions": {
+            "C": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 8 ],
+            "D": [ 11 ],
+            "Q": [ 4 ]
+          }
+        },
+        "$auto$ff.cc:266:slice$96": {
+          "hide_name": 1,
+          "type": "$_DFF_P_",
+          "parameters": {
+          },
+          "attributes": {
+            "always_ff": "00000000000000000000000000000001",
+            "src": "multiout.sv:11.5-19.8"
+          },
+          "port_directions": {
+            "C": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 8 ],
+            "D": [ 13 ],
+            "Q": [ 5 ]
+          }
+        },
+        "$auto$ff.cc:266:slice$97": {
+          "hide_name": 1,
+          "type": "$_DFF_P_",
+          "parameters": {
+          },
+          "attributes": {
+            "always_ff": "00000000000000000000000000000001",
+            "src": "multiout.sv:11.5-19.8"
+          },
+          "port_directions": {
+            "C": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 8 ],
+            "D": [ 14 ],
+            "Q": [ 6 ]
+          }
+        },
+        "$auto$ff.cc:266:slice$98": {
+          "hide_name": 1,
+          "type": "$_DFF_P_",
+          "parameters": {
+          },
+          "attributes": {
+            "always_ff": "00000000000000000000000000000001",
+            "src": "multiout.sv:11.5-19.8"
+          },
+          "port_directions": {
+            "C": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 8 ],
+            "D": [ 2 ],
+            "Q": [ 9 ]
+          }
+        },
+        "$auto$ff.cc:266:slice$99": {
+          "hide_name": 1,
+          "type": "$_DFF_P_",
+          "parameters": {
+          },
+          "attributes": {
+            "always_ff": "00000000000000000000000000000001",
+            "src": "multiout.sv:11.5-19.8"
+          },
+          "port_directions": {
+            "C": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 8 ],
+            "D": [ 3 ],
+            "Q": [ 10 ]
+          }
+        }
+      },
+      "netnames": {
+        "$0\\w[0:0]": {
+          "hide_name": 1,
+          "bits": [ 11 ],
+          "attributes": {
+            "src": "multiout.sv:11.5-19.8"
+          }
+        },
+        "$0\\x[0:0]": {
+          "hide_name": 1,
+          "bits": [ 13 ],
+          "attributes": {
+            "src": "multiout.sv:11.5-19.8"
+          }
+        },
+        "$0\\y[0:0]": {
+          "hide_name": 1,
+          "bits": [ 14 ],
+          "attributes": {
+            "src": "multiout.sv:11.5-19.8"
+          }
+        },
+        "$0\\z[0:0]": {
+          "hide_name": 1,
+          "bits": [ 12 ],
+          "attributes": {
+            "src": "multiout.sv:11.5-19.8"
+          }
+        },
+        "$abc$105$0\\w[0:0]": {
+          "hide_name": 1,
+          "bits": [ 11 ],
+          "attributes": {
+            "src": "multiout.sv:11.5-19.8"
+          }
+        },
+        "$abc$105$0\\x[0:0]": {
+          "hide_name": 1,
+          "bits": [ 13 ],
+          "attributes": {
+            "src": "multiout.sv:11.5-19.8"
+          }
+        },
+        "$abc$105$0\\y[0:0]": {
+          "hide_name": 1,
+          "bits": [ 14 ],
+          "attributes": {
+            "src": "multiout.sv:11.5-19.8"
+          }
+        },
+        "$abc$105$0\\z[0:0]": {
+          "hide_name": 1,
+          "bits": [ 12 ],
+          "attributes": {
+            "src": "multiout.sv:11.5-19.8"
+          }
+        },
+        "$abc$105$a_": {
+          "hide_name": 1,
+          "bits": [ 9 ],
+          "attributes": {
+            "src": "multiout.sv:9.11-9.13"
+          }
+        },
+        "$abc$105$b_": {
+          "hide_name": 1,
+          "bits": [ 10 ],
+          "attributes": {
+            "src": "multiout.sv:9.15-9.17"
+          }
+        },
+        "a": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "multiout.sv:4.17-4.18"
+          }
+        },
+        "a_": {
+          "hide_name": 0,
+          "bits": [ 9 ],
+          "attributes": {
+            "src": "multiout.sv:9.11-9.13"
+          }
+        },
+        "b": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "multiout.sv:4.20-4.21"
+          }
+        },
+        "b_": {
+          "hide_name": 0,
+          "bits": [ 10 ],
+          "attributes": {
+            "src": "multiout.sv:9.15-9.17"
+          }
+        },
+        "clk": {
+          "hide_name": 0,
+          "bits": [ 8 ],
+          "attributes": {
+            "src": "multiout.sv:6.17-6.20"
+          }
+        },
+        "w": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "multiout.sv:5.18-5.19"
+          }
+        },
+        "x": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "multiout.sv:5.21-5.22"
+          }
+        },
+        "y": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "multiout.sv:5.24-5.25"
+          }
+        },
+        "z": {
+          "hide_name": 0,
+          "bits": [ 7 ],
+          "attributes": {
+            "src": "multiout.sv:5.27-5.28"
+          }
+        }
+      }
+    }
+  }
+}
