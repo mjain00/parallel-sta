@@ -130,6 +130,85 @@ void DAG::removeCycles()
     }
 }
 
+std::vector<std::vector<int>> DAG::createLevelList(const ASIC &asic, const std::map<int, Cell> &cell_map)
+{
+    std::unordered_map<int, int> inDegree;
+    std::vector<std::vector<int>> levelList;
+    std::unordered_map<int, int> level;
+    std::queue<int> q;
+    // Calculate in-degrees
+    for (const auto &node : adjList)
+    {
+        inDegree[node.first]; // Defaults to 0 if not present
+        for (int neighbor : node.second)
+        {
+            inDegree[neighbor]++;
+        }
+    }
+
+    // Enqueue nodes with 0 in-degree
+    for (const auto &[node, degree] : inDegree)
+    {
+        if (degree == 0)
+        {
+            q.push(node);
+            level[node] = 0;
+        }
+    }
+
+    int max_level = 0;
+    while (!q.empty())
+    {
+        int current = q.front();
+        q.pop();
+        int current_level = level[current];
+        max_level = std::max(max_level, current_level);
+
+        // For each outgoing connection from 'current', calculate RC delay
+        for (int neighbor : adjList[current])
+        {
+            inDegree[neighbor]--;
+            if (inDegree[neighbor] == 0)
+            {
+                q.push(neighbor);
+                level[neighbor] = current_level + 1;
+            }
+        }
+    }
+
+    levelList.resize(max_level + 1);
+    for (const auto &[node, l] : level)
+    {
+        levelList[l].push_back(node);
+    }
+
+    return levelList;
+}
+
+void DAG::propogateDelay(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> &level_list)
+{
+    for (int i = 0; i < level_list.size(); ++i)
+    {
+        for (const auto &node : level_list[i])
+        {
+            for (int neighbor : adjList[node])
+            {
+                if (cell_map.find(node) != cell_map.end() && cell_map.find(neighbor) != cell_map.end())
+                {
+                    double rc_delay = computeRCDelay(cell_map.at(node), cell_map.at(neighbor));
+                    double slew_rate = computeSlewRate(cell_map.at(node), cell_map.at(neighbor), rc_delay);
+                    delays_and_slews.push_back({node, neighbor, rc_delay, slew_rate});
+                    updateArrivalTime(node, neighbor, cell_map);
+                }
+                else
+                {
+                    std::cerr << "These are signals - don't correspond to components" << std::endl;
+                }
+            }
+        }
+    }
+}
+
 std::vector<int> DAG::topologicalSort(const ASIC &asic, const std::map<int, Cell> &cell_map)
 {
     std::unordered_map<int, int> inDegree;
@@ -268,6 +347,101 @@ void DAG::reverseList()
             reverseAdjList[v].push_back(u);
         }
     }
+}
+
+std::unordered_map<int, float> DAG::calculateSlack(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> &level_list)
+{
+    std::unordered_map<int, int> required_time;
+    std::unordered_map<int, float> slack;
+
+    reverseList();
+
+    for (int output : asic.outputs)
+    {
+        required_time[output] = CLOCK_PERIOD - SETUP_TIME;
+        std::string name = asic.net_dict.count(output) ? asic.net_dict.at(output) : "Unknown";
+
+        if (verbose)
+        {
+            std::cout << "Output net " << name << " (ID: " << output << ") → Required time = "
+                      << required_time[output] << "\n";
+        }
+    }
+
+    for (int i = level_list.size() - 1; i >= 0; i--) {
+        for (auto it = level_list[i].rbegin(); it != level_list[i].rend(); ++it)
+        {
+            int current = *it;
+            std::cout << "Current node: " << current << std::endl;
+
+            if (required_time.find(current) == required_time.end())
+            {
+                required_time[current] = INT32_MAX;
+            }
+
+            if (reverseAdjList.count(current))
+            {
+                for (int fanin : reverseAdjList[current])
+                {
+                    float cell_delay = 0.0f;
+
+                    // delay from cell driving `current`
+                    if (cell_map.count(current))
+                    {
+                        cell_delay = cell_map.at(current).delay;
+                    }
+
+                    int candidate_time = required_time[current] - cell_delay;
+
+                    if (required_time.find(fanin) == required_time.end())
+                    {
+                        required_time[fanin] = candidate_time;
+                    }
+                    else
+                    {
+                        required_time[fanin] = std::min(required_time[fanin], candidate_time);
+                    }
+
+                    std::string fanin_name = asic.net_dict.count(fanin) ? asic.net_dict.at(fanin) : "Unknown";
+
+                    if (verbose)
+                    {
+                        std::cout << "  Fanin " << fanin_name << " (ID: " << fanin
+                                  << ") → Required time updated to " << required_time[fanin]
+                                  << " (via " << cell_delay << " delay)\n";
+                    }
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < level_list.size(); i++)
+    {
+        for (int net : level_list[i])
+        {
+            float at = arrival_time.count(net) ? arrival_time.at(net) : 0.0f;
+            float rt = required_time.count(net) ? required_time[net] : CLOCK_PERIOD;
+
+            float s = rt - at;
+            slack[net] = s;
+
+            std::string net_name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
+
+            if (verbose)
+            {
+                std::cout << "Net " << net_name << " (ID: " << net << ")"
+                          << " | Arrival: " << at
+                          << " | Required: " << rt
+                          << " | Slack: " << s;
+                if (s < 0)
+                    std::cout << " VIOLATION!";
+                else if (s == 0)
+                    std::cout << " CRITICAL PATH";
+                std::cout << std::endl;
+            }
+        }
+    }
+    return slack;
 }
 
 std::unordered_map<int, float> DAG::analyzeTiming(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<int> &sorted)
