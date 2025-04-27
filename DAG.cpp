@@ -7,26 +7,60 @@ void DAG::addEdge(int from, int to) {
     adjList[from].push_back(to);
 }
 
-void DAG::createTaskGraph()
-{
+void DAG::createTaskGraph(const ASIC& asic) {
+    reverseList();
+    // Forward pass: rc -> slew -> arrival -> fanout rc
     for (const auto& [node, neighbors] : adjList) {
         std::string rc = std::to_string(node) + "_rc";
         std::string slew = std::to_string(node) + "_slew";
-        std::string arr = std::to_string(node) + "_arrival";
-    
-        taskGraph[rc].push_back(slew);
-        taskGraph[slew].push_back(arr);
-    
+        std::string arrival = std::to_string(node) + "_arrival";
+
+        taskGraph[rc].push_back(slew);       // rc -> slew
+        taskGraph[slew].push_back(arrival);   // slew -> arrival
+
         for (int neighbor : neighbors) {
             std::string neighbor_rc = std::to_string(neighbor) + "_rc";
-            taskGraph[arr].push_back(neighbor_rc);
+            taskGraph[arrival].push_back(neighbor_rc);  // arrival -> fanout rc
         }
     }
-    
-    std::cout << "We are done with task graph \n";
 
-    
+    // After all forward pass is complete, handle backward pass starting from outputs
+    for (int outputNode : asic.outputs) {
+        std::string output_arrival = std::to_string(outputNode) + "_arrival";
+        std::string output_be_required = std::to_string(outputNode) + "_be_required";
+
+        // Link arrival to be_required
+        taskGraph[output_arrival].push_back(output_be_required);
+
+        // Now propagate be_required backwards to fan-ins
+        std::queue<int> q;
+        std::unordered_set<int> visited;
+
+        // Start with the output node
+        q.push(outputNode);
+        visited.insert(outputNode);
+
+        while (!q.empty()) {
+            int current = q.front();
+            q.pop();
+
+            std::string current_be_required = std::to_string(current) + "_be_required";
+
+            // Look at fanins (reverse adjList for backward pass)
+            for (int fanin : reverseAdjList[current]) { // reverse adjacency list!
+                if (!visited.count(fanin)) {
+                    std::string fanin_be_required = std::to_string(fanin) + "_be_required";
+                    taskGraph[current_be_required].push_back(fanin_be_required); // Propagate to fanins
+                    q.push(fanin);
+                    visited.insert(fanin);
+                }
+            }
+        }
+    }
+
+    std::cout << "Done creating task graph (forward + backward after outputs)!" << std::endl;
 }
+
 
 void DAG::printTaskGraph() {
     std::cout << "Task Graph Dependencies (DAG):\n";
