@@ -204,7 +204,7 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
 
 
 
-std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>& cell_map) {
+std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>& cell_map,const ASIC& asic) {
     std::map<std::string, int> inDegree;
     std::vector<int> result;
     std::vector<std::string> q;
@@ -289,7 +289,7 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
                               << " | Cell ID: " << cell_id << "\n";
                 }
 
-                dag.processQueue(current, dag, cell_map);
+                dag.processQueue(current, dag, cell_map,asic);
 
                 for (const std::string& neighbor : taskGraph[current]) {
                     int new_in_degree;
@@ -349,7 +349,7 @@ std::vector<int> DAG::topological_TaskGraph(DAG& dag, const std::map<int, Cell>&
     return result;
 }
 
-void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cell>& cell_map) {
+void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cell>& cell_map,const ASIC& asic) {
     
     size_t sep = task.find('_');
     if (sep == std::string::npos) {
@@ -396,8 +396,126 @@ void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cel
         }
     
     } 
+    else if (stage == "be_required") {
+        // For "be_required", we propagate the required state backwards to fan-ins
+        for (int fanin : reverseAdjList[cell_id]) { // Using reverse adjacency list for backward pass
+            // if (cell_map.find(cell_id) != cell_map.end() && cell_map.find(fanin) != cell_map.end()) {
+                // You could add custom logic here to handle the required state propagation
+                dag.propagateBeRequired(cell_map.at(cell_id), cell_id, fanin,asic);
+                if(verbose){
+                    std::cout <<"We are PROCESSING FOR TO BE REQUIRED \n";
+                }
+        
+            // }
+        }
+    }
     else {
         std::cerr << "Unknown task type: " << task << std::endl;
+    }
+}
+
+void DAG::propagateBeRequired(const Cell& current_cell, int current_id, int fanin_id, const ASIC& asic) {
+    // Retrieve the current required time for the current cell (be_required)
+
+    
+    float required_time_for_current = required_time[current_id];
+    
+    // Calculate the required time for the fan-in cell by subtracting the delay of the current cell
+    float required_time_for_fanin = required_time_for_current - current_cell.delay;
+
+    // If the fan-in cell doesn't have a required time yet, set it to the calculated required time
+    if (required_time.find(fanin_id) == required_time.end()) {
+        required_time[fanin_id] = required_time_for_fanin;
+    } else {
+        // If the fan-in already has a required time, take the minimum between the current required time
+        // and the newly calculated one (to account for the critical path)
+        required_time[fanin_id] = std::min(required_time[fanin_id], required_time_for_fanin);
+    }
+
+    // Log the update (optional, depends on verbosity flag)
+    std::string fanin_name = asic.net_dict.count(fanin_id) ? asic.net_dict.at(fanin_id) : "Unknown";
+    if (verbose) {
+        std::cout << "THIS IS NEW CODE: Fan-in " << fanin_name << " (ID: " << fanin_id
+                  << ") → Required time updated to " << required_time[fanin_id]
+                  << " (via " << current_cell.delay << " delay)\n";
+    }
+}
+
+std::unordered_map<int, float> DAG::computeSlack(const ASIC& asic, const std::vector<int>& sorted) {
+    std::unordered_map<int, float> slack;
+
+    if (verbose) {
+        std::cout << "\n=== Step 3: Slack Computation ===\n";
+    }
+
+    for (int net : sorted) {
+        // Get the arrival time (or set to 0.0f if not found)
+        float at = arrival_time.count(net) ? arrival_time.at(net) : 0.0f;
+        
+        // Get the required time (or set to CLOCK_PERIOD if not found)
+        float rt = required_time.count(net) ? required_time[net] : CLOCK_PERIOD;
+        
+        // Compute the slack
+        float s = rt - at;
+        
+        // Store the slack value
+        slack[net] = s;
+
+        // Get the net name (if available) for debugging purposes
+        std::string net_name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
+
+        if (verbose) {
+            // Print the details for the current net
+            std::cout << "Net " << net_name << " (ID: " << net << ")"
+                      << " | Arrival: " << at
+                      << " | Required: " << rt
+                      << " | Slack: " << s;
+            
+            // Check if there's a timing violation
+            if (s < 0) {
+                std::cout << " VIOLATION!";
+            } else if (s == 0) {
+                std::cout << " CRITICAL PATH";
+            }
+
+            std::cout << std::endl;
+        }
+    }
+
+    return slack;
+}
+
+
+void DAG::initializeRequiredTime(const ASIC& asic,const std::map<int, Cell>& cell_map) {
+    // Initialize required time for output cells
+    for (int output : asic.outputs) {
+        required_time[output] = CLOCK_PERIOD - SETUP_TIME;  // Set the required time for outputs
+
+        std::string output_name = asic.net_dict.count(output) ? asic.net_dict.at(output) : "Unknown";
+        if (verbose) {
+            std::cout << "Output " << output_name << " (ID: " << output << ") → Required time = "
+                      << required_time[output] << "\n";
+        }
+    }
+
+    // Initialize required time for non-output cells (if not already set)
+    for (const auto& cell_pair : cell_map) {
+        int cell_id = cell_pair.first;
+
+        // Skip if it's an output cell already initialized
+        if (required_time.find(cell_id) != required_time.end()) {
+            continue;
+        }
+
+        // Initialize the required time for non-output cells to a very large number
+        required_time[cell_id] = INT64_MAX;  // or use a very large float value
+
+        // Optionally, you can print for debugging
+        std::string cell_name = asic.net_dict.count(cell_id) ? asic.net_dict.at(cell_id) : "Unknown";
+        if (verbose) {
+            std::cout << "Cell " << cell_name << " (ID: " << cell_id << ") → Required time initialized to "
+                      << required_time[cell_id] << "\n";
+        }
     }
 }
 
