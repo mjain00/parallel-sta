@@ -8,6 +8,8 @@ typedef struct
 {
     int id;
     double delay;
+    double resistance; 
+    double capacitance; 
     CellType type;
     vector<int> inputs;
     vector<int> outputs;
