@@ -185,7 +185,7 @@ std::vector<std::vector<int>> DAG::createLevelList(const ASIC &asic, const std::
     return levelList;
 }
 
-void DAG::propogateRC(int node, const std::map<int, Cell> &cell_map)
+void DAG::propagateRC(int node, const std::map<int, Cell> &cell_map)
 {
     // std::cout << "TID: " << omp_get_thread_num() << " - in propRC for node: " << node << std::endl;
     if (cell_map.find(node) == cell_map.end())
@@ -206,7 +206,7 @@ void DAG::propogateRC(int node, const std::map<int, Cell> &cell_map)
     }
 }
 
-void DAG::propogateSlew(int node, const std::map<int, Cell> &cell_map)
+void DAG::propagateSlew(int node, const std::map<int, Cell> &cell_map)
 {
     // std::cout << "TID: " << omp_get_thread_num() << " - in propSlew for node: " << node << std::endl;
     if (cell_map.find(node) == cell_map.end())
@@ -235,7 +235,7 @@ void DAG::propogateSlew(int node, const std::map<int, Cell> &cell_map)
     }
 }
 
-void DAG::propogateArrivalTime(int node, const std::map<int, Cell> &cell_map)
+void DAG::propagateArrivalTime(int node, const std::map<int, Cell> &cell_map)
 {
     // std::cout << "TID: " << omp_get_thread_num() << " - in propArrivalTime for node: " << node << std::endl;
     if (cell_map.find(node) == cell_map.end())
@@ -255,7 +255,7 @@ void DAG::propogateArrivalTime(int node, const std::map<int, Cell> &cell_map)
 
         double total_delay = (et.rc_delay + et.slew_rate) * 10e9 + cell_delay;
 
-        #pragma omp critical
+#pragma omp critical
         {
             double old_arrival = arrival_time[neighbor];
             double new_arrival = arrival_time[node] + total_delay;
@@ -268,13 +268,13 @@ void DAG::propogateArrivalTime(int node, const std::map<int, Cell> &cell_map)
                           << arrival_time[node] << " + " << total_delay
                           << ") = " << arrival_time[neighbor] << std::endl;
         }
-        
+
         // updateArrivalTime(node, neighbor, cell_map);
         // std::cout << "TID: " << omp_get_thread_num() << " - Propagating Arrival Time for node: " << node << std::endl;
     }
 }
 
-void DAG::forwardPropogation(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> level_list)
+void DAG::forwardPropagation(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> level_list)
 {
     int l_min = 0;
     int l_max = level_list.size() - 1;
@@ -301,7 +301,7 @@ void DAG::forwardPropogation(const ASIC &asic, const std::map<int, Cell> &cell_m
                         // std::cout << "task - Propagating RC for node: " << u << std::endl;
 #pragma omp task firstprivate(u, i) // depend(out : rc_dep.data()[i])
                         {
-                            propogateRC(u, cell_map);
+                            propagateRC(u, cell_map);
                         }
                     }
                 }
@@ -313,7 +313,7 @@ void DAG::forwardPropogation(const ASIC &asic, const std::map<int, Cell> &cell_m
                         // std::cout << "Task - Propagating Slew for node: " << u << " in level " << (i - 1) << std::endl;
 #pragma omp task firstprivate(u, i) // depend(in: rc_dep.data()[i]) depend(out: slew_dep.data()[i]) //depend(inout : i) // depend(in : level_list[i]) depend(out : level_list[i - 1])
                         {
-                            propogateSlew(u, cell_map);
+                            propagateSlew(u, cell_map);
                         }
                     }
                 }
@@ -325,7 +325,7 @@ void DAG::forwardPropogation(const ASIC &asic, const std::map<int, Cell> &cell_m
                         // std::cout << "Task - Propagating Arrival Time for node: " << u << " in level " << (i - 1) << std::endl;
 #pragma omp task firstprivate(u, i) // depend(in: slew_dep.data()[i - 2]) //depend(inout : i) // depend(in : level_list[i]) depend(out : level_list[i - 2])
                         {
-                            propogateArrivalTime(u, cell_map);
+                            propagateArrivalTime(u, cell_map);
                         }
                     }
                 }
@@ -418,11 +418,11 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
                 // Update the neighbor's arrival time with the maximum of the old or new arrival time
                 arrival_time[neighbor] = std::max(old_arrival, new_arrival);
                 if (verbose)
-                std::cout << "Updating arrival time for cell " << neighbor
-                          << ": max(" << old_arrival << ", "
-                          << arrival_time[current] << " + " << total_delay
-                          << ") = " << arrival_time[neighbor] << std::endl;
-            }           
+                    std::cout << "Updating arrival time for cell " << neighbor
+                              << ": max(" << old_arrival << ", "
+                              << arrival_time[current] << " + " << total_delay
+                              << ") = " << arrival_time[neighbor] << std::endl;
+            }
             return;
         }
     }
@@ -477,9 +477,138 @@ void DAG::reverseList()
     }
 }
 
+void DAG::propagateFanin(int node, const std::map<int, Cell> &cell_map, const ASIC &asic)
+{
+    if (reverseAdjList.count(node) == 0)
+        return;
+
+    if (required_time.find(node) == required_time.end())
+    {
+        return;
+        // required_time[node] = INT32_MAX;
+        // std::cout << "TID: " << omp_get_thread_num() << " set req time for node " << node << " to max val\n";
+    }
+
+    float cell_delay = 0.0f;
+
+    if (cell_map.count(node))
+    {
+        cell_delay = cell_map.at(node).delay;
+    }
+    for (int fanin : reverseAdjList[node])
+    {
+        int candidate_time = required_time[node] - cell_delay;
+        // std::cout << "TID: " << omp_get_thread_num() << " candidate time for node " << node << " is " << candidate_time << endl;
+
+#pragma omp critical
+        {
+            if (required_time.find(fanin) == required_time.end())
+            {
+                required_time[fanin] = candidate_time;
+                // std::cout << "TID: " << omp_get_thread_num() << " set req time for node " << node << " to candidate value\n";
+            }
+            else
+            {
+                required_time[fanin] = std::min(required_time[fanin], candidate_time);
+                // std::cout << "TID: " << omp_get_thread_num() << " set req time for node " << node << " to min val\n";
+            }
+        }
+
+        if (verbose)
+        {
+            std::string fanin_name = asic.net_dict.count(fanin) ? asic.net_dict.at(fanin) : "Unknown";
+
+            std::cout << "TID: " << omp_get_thread_num() << "  Fanin " << fanin_name << " (ID: " << fanin
+                      << ") → Required time updated to " << required_time[fanin]
+                      << " (via " << cell_delay << " delay)\n";
+        }
+    }
+}
+
+void DAG::propagateRequiredArrivalTime(int node, const std::map<int, Cell> &cell_map, const ASIC &asic)
+{
+    float at = arrival_time.count(node) ? arrival_time.at(node) : 0.0f;
+    float rt = required_time.count(node) ? required_time.at(node) : CLOCK_PERIOD;
+
+    float s = rt - at;
+
+#pragma omp critical
+    {
+        slack[node] = s;
+    }
+
+    if (verbose)
+    {
+        std::string net_name = asic.net_dict.count(node) ? asic.net_dict.at(node) : "Unknown";
+        std::cout << "Net " << net_name << " (ID: " << node << ")"
+                  << " | Arrival: " << at
+                  << " | Required: " << rt
+                  << " | Slack: " << s;
+        if (s < 0)
+            std::cout << " VIOLATION!";
+        else if (s == 0)
+            std::cout << " CRITICAL PATH";
+        std::cout << std::endl;
+    }
+}
+
+void DAG::backwardPropagation(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> &level_list)
+{
+    int l_min = 0;
+    int l_max = level_list.size() - 1;
+    while (l_max >= 0 && level_list[l_max].empty())
+    {
+        --l_max;
+    }
+
+    reverseList();
+
+    for (int output : asic.outputs)
+    {
+        required_time[output] = CLOCK_PERIOD - SETUP_TIME;
+
+        if (verbose)
+        {
+            std::string name = asic.net_dict.count(output) ? asic.net_dict.at(output) : "Unknown";
+
+            std::cout << "Output net " << name << " (ID: " << output << ") → Required time = "
+                      << required_time[output] << "\n";
+        }
+    }
+
+#pragma omp parallel num_threads(16)
+    {
+#pragma omp single
+        {
+            for (int i = l_max; i >= l_min; i--)
+            {
+// propagate Fanin
+#pragma omp task firstprivate(i)
+                {
+                    for (int u : level_list[i])
+                    {
+                        propagateFanin(u, cell_map, asic);
+                    }
+                }
+                // propagate required arrival time
+                // #pragma omp taskwait
+
+#pragma omp task firstprivate(i)
+                {
+                    for (int u : level_list[i])
+                    {
+                        propagateRequiredArrivalTime(u, cell_map, asic);
+                    }
+                }
+#pragma omp taskwait
+            }
+        }
+    }
+}
+
 std::unordered_map<int, float> DAG::calculateSlack(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<std::vector<int>> &level_list)
 {
-    std::unordered_map<int, int> required_time;
+    // std::unordered_map<int, int> required_time;
     std::unordered_map<int, float> slack;
 
     reverseList();
@@ -673,5 +802,10 @@ std::unordered_map<int, float> DAG::analyzeTiming(const ASIC &asic, const std::m
             std::cout << std::endl;
         }
     }
+    return slack;
+}
+
+std::unordered_map<int, float> DAG::getSlack()
+{
     return slack;
 }
