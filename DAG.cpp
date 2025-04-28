@@ -89,7 +89,7 @@ void DAG::removeCycles() {
 
             if (recStack.count(neighbor)) {
                 // Found a back edge → remove it
-                std::cout << "Removing back edge: " << node << " -> " << neighbor << "\n";
+                //std::cout << "Removing back edge: " << node << " -> " << neighbor << "\n";
                 it = neighbors.erase(it); // erase and continue
             } else if (!visited.count(neighbor)) {
                 dfs(neighbor);
@@ -136,7 +136,7 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
         std::vector<int> next_q;
         std::vector<int> q_copy = q;
 
-#pragma omp parallel
+#pragma omp parallel num_threads(16)
         {
             std::vector<int> local_next;
             std::vector<std::tuple<int, int, double, double>> local_delays;
@@ -161,12 +161,10 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
                         updateArrivalTime(current, neighbor, cell_map);  // Make this thread-safe or reduce inside parallel block
                     }
 
-#pragma omp atomic
-                    --inDegree[neighbor];
 
                     int updated_deg;
-#pragma omp atomic read
-                    updated_deg = inDegree[neighbor];
+#pragma omp atomic capture
+                    updated_deg = --inDegree[neighbor];
 
                     if (updated_deg == 0) {
                         local_next.push_back(neighbor);
@@ -219,7 +217,7 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
         }
     }
 
-    std::cerr << "Warning: No delay/slew entry found for edge " << current << " -> " << neighbor << std::endl;
+    //std::cerr << "Warning: No delay/slew entry found for edge " << current << " -> " << neighbor << std::endl;
 }
 
 
@@ -233,6 +231,7 @@ double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,
     double slew_time = voltage_swing / slew_rate; // (V / (V/s)) = seconds
 
     // Print Slew Rate
+    if (verbose)
     std::cout << "Computing Slew Rate: "
               << "Resistance of current cell = " << current_cell.resistance
               << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
@@ -247,6 +246,7 @@ double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell)
     double rc_delay = current_cell.resistance * neighbor_cell.capacitance;
 
     // Print RC delay
+    if (verbose)
     std::cout << "Computing RC Delay: "
               << "Resistance of current cell = " << current_cell.id
               << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
@@ -403,7 +403,7 @@ std::unordered_map<int, float> DAG::analyzeTiming(const ASIC& asic, const std::m
         int current = *it;
 
         if (required_time.find(current) == required_time.end()) {
-            required_time[current] = INT64_MAX;
+            required_time[current] = INT32_MAX;
         }
 
         if (reverseAdjList.count(current)) {
