@@ -66,8 +66,13 @@ int main(int argc, char **argv)
     std::vector<std::vector<int>> level_list = dag.createLevelList(asic, cell_map);
 
     start = high_resolution_clock::now();
+<<<<<<< Updated upstream
     // std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
     dag.forwardPropagation(asic, cell_map, level_list);
+=======
+    std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
+    // dag.forwardPropagation(asic, cell_map, level_list);
+>>>>>>> Stashed changes
 
     end = high_resolution_clock::now();
     duration = duration_cast<microseconds>(end - start).count();
@@ -86,16 +91,20 @@ int main(int argc, char **argv)
 
     start = high_resolution_clock::now();
 
+<<<<<<< Updated upstream
     // std::unordered_map<int, float> slack = dag.analyzeTiming(asic, cell_map, sorted);
+=======
+    dag.analyzeTiming(asic, cell_map, sorted);
+>>>>>>> Stashed changes
     // std::unordered_map<int, float> slack = dag.calculateSlack(asic, cell_map, level_list);
 
-    dag.backwardPropagation(asic, cell_map, level_list);
+    // dag.backwardPropagation(asic, cell_map, level_list);
     end = high_resolution_clock::now();
     duration = duration_cast<microseconds>(end - start).count();
     cout << "\n[Time] Analyze Timing (Backward Pass): " << duration << " us" << endl;
 
     std::cout << "\nRESULTS:" << std::endl;
-    std::unordered_map<int, float> slack = dag.getSlack();
+    std::unordered_map<int, float> slack = dag.analyzeTiming(asic, cell_map, sorted);
     for (const auto &[net, s] : slack)
     {
         std::string name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
