@@ -55,8 +55,8 @@ int main(int argc, char** argv)
     std::cout << "\nDAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
     dag.removeCycles();
-    dag.createTaskGraph(asic);
-    dag.initializeRequiredTime(asic,cell_map);
+    dag.createTaskGraph();
+
     //dag.printTaskGraph();
     std::cout << "We are done with creating the task graph";
     start = high_resolution_clock::now();
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
     //std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
     //cout << "*****************************************" << endl;
 
-    std::vector<int> sorted = dag.topological_TaskGraph(dag, cell_map,asic);
+    std::vector<int> sorted = dag.topological_TaskGraph(dag, cell_map);
     
     end = high_resolution_clock::now();
     duration = duration_cast<microseconds>(end - start).count();
@@ -72,8 +72,7 @@ int main(int argc, char** argv)
 
     start = high_resolution_clock::now();
 
-    // std::unordered_map<int, float> slack = dag.analyzeTiming(asic, cell_map, sorted);
-    std::unordered_map<int, float> slack = dag.computeSlack(asic, sorted);
+    std::unordered_map<int, float> slack = dag.analyzeTiming(asic, cell_map, sorted);
 
     end = high_resolution_clock::now();
     duration = duration_cast<microseconds>(end - start).count();

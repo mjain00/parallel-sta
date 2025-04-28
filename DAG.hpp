@@ -20,6 +20,7 @@ class DAG {
 private:
     std::map<int, std::vector<int>> adjList; // Adjacency list for the graph
     std::unordered_map<int, std::vector<int>> reverseAdjList; // Reverse adjacency list for the graph
+    std::unordered_map<int, float> arrival_time;
     // Function to reverse the adjacency list
     void reverseList();
 
@@ -38,10 +39,8 @@ public:
         double slew_rate; // Slew rate value
     };
     // Adds a directed edge from 'from' node to 'to' node
-    std::unordered_map<int, float> arrival_time;
-
     void addEdge(int from, int to);
-    void createTaskGraph(const ASIC& asic);
+    void createTaskGraph();
 
     // Displays the DAG (adjacency list representation)
     void displayGraph(const ASIC& asic);
@@ -57,15 +56,11 @@ public:
     std::unordered_map<int, double> rc_delay_map; // node_id → RC delay
     std::vector<slewInfo> slew_value;
     std::vector<rcInfo> rc_value;
-    std::vector<int> topological_TaskGraph(DAG& dag,const std::map<int, Cell>& cell_map,const ASIC& asic);
+    std::vector<int> topological_TaskGraph(DAG& dag,const std::map<int, Cell>& cell_map);
     std::map<std::string, std::vector<std::string>> taskGraph;
-    void processQueue(const std::string& task, DAG& dag,const std::map<int, Cell>& cell_map,const ASIC& asic);
+    void processQueue(const std::string& task, DAG& dag,const std::map<int, Cell>& cell_map);
     void printTaskGraph();
-    void propagateBeRequired(const Cell& current_cell, int current_id, int fanin_id,const ASIC& asic);
-    // std::unordered_map<int, int> required_time;
-    std::unordered_map<int, float> required_time;
-    void initializeRequiredTime(const ASIC& asic,const std::map<int, Cell>& cell_map);
-    std::unordered_map<int, float> computeSlack(const ASIC& asic, const std::vector<int>& sorted);
+
 
 };
 
