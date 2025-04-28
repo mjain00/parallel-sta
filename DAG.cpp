@@ -147,7 +147,7 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
 
                 // You can store this RC delay or use it to update other metrics
             } else {
-                std::cerr << "These are signals - don't correspond to components" << std::endl;
+                // std::cerr << "These are signals - don't correspond to components" << std::endl;
                 
             }
 
@@ -295,10 +295,10 @@ double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,
     slew_value.push_back({current_cell_id, neighboor_cell_id, slew_time});
 
     // Print Slew Rate
-    std::cout << "Computing Slew Rate: "
-              << "Resistance of current cell = " << current_cell.resistance
-              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-              << " => Slew Rate = " << slew_time << " V/s" << std::endl;
+    // std::cout << "Computing Slew Rate: "
+    //           << "Resistance of current cell = " << current_cell.resistance
+    //           << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+    //           << " => Slew Rate = " << slew_time << " V/s" << std::endl;
 
     return slew_time;
 }
@@ -310,10 +310,10 @@ double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell,
     rc_value.push_back({current_id, neighbor_id, rc_delay});
 
     // Print RC delay
-    std::cout << "Computing RC Delay: "
-              << "Resistance of current cell = " << current_cell.id
-              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-              << " => RC Delay = " << rc_delay << std::endl;
+    // std::cout << "Computing RC Delay: "
+    //           << "Resistance of current cell = " << current_cell.id
+    //           << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+    //           << " => RC Delay = " << rc_delay << std::endl;
 
     return rc_delay;
 }
