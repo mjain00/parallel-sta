@@ -238,7 +238,6 @@ void DAG::processQueue(const std::string& task, DAG& dag,const std::map<int, Cel
         }
     } 
     else {
-        std::cerr << "Unknown task type: " << task << std::endl;
     }
 }
 
@@ -269,18 +268,11 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
 
     double old_arrival = arrival_time[neighbor];
     double new_arrival = arrival_time[current] + total_delay;
-    std::cout << "The delay for rc and slew is " << (rc_delay + slew)*10e9 << std::endl;
     // Update the neighbor's arrival time with the maximum of the old or new arrival time
     arrival_time[neighbor] = std::max(old_arrival, new_arrival);
 
-    std::cout << "Updating arrival time for cell " << neighbor
-                << ": max(" << old_arrival << ", "
-                << new_arrival
-                << ") = " << arrival_time[neighbor] << std::endl;
-
     return;
 
-    std::cerr << "Warning: No delay/slew entry found for edge " << current << " -> " << neighbor << std::endl;
 }
 
 
