@@ -136,7 +136,7 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
         std::vector<int> next_q;
         std::vector<int> q_copy = q;
 
-#pragma omp parallel
+#pragma omp parallel num_threads(8)
         {
             std::vector<int> local_next;
             std::vector<std::tuple<int, int, double, double>> local_delays;
@@ -165,7 +165,7 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
                     --inDegree[neighbor];
 
                     int updated_deg;
-#pragma omp atomic read
+#pragma omp atomic 
                     updated_deg = inDegree[neighbor];
 
                     if (updated_deg == 0) {
@@ -173,7 +173,6 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
                     }
                 }
             }
-
 #pragma omp critical
             {
                 next_q.insert(next_q.end(), local_next.begin(), local_next.end());
@@ -190,37 +189,32 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
     return result;
 }
 
-
 void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map) {
-    // Find the corresponding delay and slew between current -> neighbor
     for (const auto& [from, to, rc_delay, slew] : delays_and_slews) {
         if (from == current && to == neighbor) {
-            double current_cell_delay = cell_map.at(current).delay;  // Assuming 'delay' is a member of 'Cell'
-            double neighbor_cell_delay = cell_map.at(neighbor).delay;  // Assuming 'delay' is a member of 'Cell'
+            double current_cell_delay = cell_map.at(current).delay;
+            double neighbor_cell_delay = cell_map.at(neighbor).delay;
 
-            // Calculate total delay as the sum of RC delay, slew rate, and component delays
-            double total_delay = (rc_delay + slew)*10e9 + neighbor_cell_delay;
+            double total_delay = (rc_delay + slew) * 10e9 + neighbor_cell_delay;
+
+            // Entire block critical to prevent race conditions
             #pragma omp critical
             {
-                if (arrival_time.find(neighbor) == arrival_time.end()) {
-                    arrival_time[neighbor] = 0;
+                if (arrival_time.find(current) == arrival_time.end()) {
+                    arrival_time[current] = 0.0;
                 }
-            
-            }
-            
-            double old_arrival = arrival_time[neighbor];
-            double new_arrival = arrival_time[current] + total_delay;
+                if (arrival_time.find(neighbor) == arrival_time.end()) {
+                    arrival_time[neighbor] = 0.0;
+                }
 
-            // Update the neighbor's arrival time with the maximum of the old or new arrival time
-#pragma openmp critical
-            {
-            arrival_time[neighbor] = std::max(old_arrival, new_arrival);
+                double old_arrival = arrival_time[neighbor];
+                double new_arrival = arrival_time[current] + total_delay;
+                arrival_time[neighbor] = std::max(old_arrival, new_arrival);
             }
         }
     }
-
-    std::cerr << "Warning: No delay/slew entry found for edge " << current << " -> " << neighbor << std::endl;
 }
+
 
 
 double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,double rc_delay) {
@@ -233,10 +227,10 @@ double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,
     double slew_time = voltage_swing / slew_rate; // (V / (V/s)) = seconds
 
     // Print Slew Rate
-    std::cout << "Computing Slew Rate: "
-              << "Resistance of current cell = " << current_cell.resistance
-              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-              << " => Slew Rate = " << slew_rate << " V/s" << std::endl;
+    // std::cout << "Computing Slew Rate: "
+    //           << "Resistance of current cell = " << current_cell.resistance
+    //           << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+    //           << " => Slew Rate = " << slew_rate << " V/s" << std::endl;
 
     return slew_time;
 }
@@ -247,10 +241,10 @@ double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell)
     double rc_delay = current_cell.resistance * neighbor_cell.capacitance;
 
     // Print RC delay
-    std::cout << "Computing RC Delay: "
-              << "Resistance of current cell = " << current_cell.id
-              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-              << " => RC Delay = " << rc_delay << std::endl;
+    // std::cout << "Computing RC Delay: "
+    //           << "Resistance of current cell = " << current_cell.id
+    //           << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+            //   << " => RC Delay = " << rc_delay << std::endl;
 
     return rc_delay;
 }

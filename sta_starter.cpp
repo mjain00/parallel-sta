@@ -55,21 +55,16 @@ int main(int argc, char** argv)
     std::cout << "\nDAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
     dag.removeCycles();
-<<<<<<< Updated upstream
     // dag.createTaskGraph();
     // dag.printTaskGraph();
-=======
-    dag.createTaskGraph();
-    dag.printTaskGraph();
->>>>>>> Stashed changes
 
     start = high_resolution_clock::now();
     
     std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
 
     end = high_resolution_clock::now();
-    duration = duration_cast<microseconds>(end - start).count();
-    cout << "\n[Time] Topological Sort (Forward Pass): " << duration << " us" << endl;
+    auto duration_top = duration_cast<microseconds>(end - start).count();
+    cout << "\n[Time] Topological Sort (Forward Pass): " << duration_top << " us" << endl;
 
     start = high_resolution_clock::now();
 
@@ -94,4 +89,6 @@ int main(int argc, char** argv)
         std::cout << std::endl;
     }
     std::cout << "BYE! part1" << std::endl;
+    cout << "\n[Time] Topological Sort (Forward Pass): " << duration_top << " us" << endl;
+
 }
