@@ -32,30 +32,33 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    auto start = high_resolution_clock::now();
+    // Timing variables
+    std::chrono::high_resolution_clock::time_point start, end;
+    long long parse_json_duration, create_cell_map_duration, build_dag_duration;
+    long long topological_sort_duration, analyze_timing_duration;
 
+    // Parsing JSON
+    start = high_resolution_clock::now();
     ASIC asic = parse_json(filename);
     assign_rc_to_cells(asic);
-
-    auto end = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(end - start).count();
-    cout << "\n[Time] Parsing JSON: " << duration << " us" << endl;
-
-    display_asic(asic);
-
-    start = high_resolution_clock::now();
-    map<int, Cell> cell_map = create_cell_map(asic.cells);
     end = high_resolution_clock::now();
-    duration = duration_cast<microseconds>(end - start).count();
-    cout << "\n[Time] Creating Cell Map: " << duration << " us" << endl;
+    parse_json_duration = duration_cast<microseconds>(end - start).count();
+    std::cout << "\n[Time] Parsing JSON: " << parse_json_duration << " us" << std::endl;
 
+    // Creating cell map
+    start = high_resolution_clock::now();
+    std::map<int, Cell> cell_map = create_cell_map(asic.cells);  // Specified map type
+    end = high_resolution_clock::now();
+    create_cell_map_duration = duration_cast<microseconds>(end - start).count();
+    std::cout << "\n[Time] Creating Cell Map: " << create_cell_map_duration << " us" << std::endl;
+
+    // Building DAG
     DAG dag;
-
     start = high_resolution_clock::now();
     dag.buildFromASIC(asic);
     end = high_resolution_clock::now();
-    duration = duration_cast<microseconds>(end - start).count();
-    cout << "\n[Time] Building DAG: " << duration << " us" << endl;
+    build_dag_duration = duration_cast<microseconds>(end - start).count();
+    std::cout << "\n[Time] Building DAG: " << build_dag_duration << " us" << std::endl;
 
     std::cout << "\nDAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
@@ -63,26 +66,28 @@ int main(int argc, char **argv)
     // dag.createTaskGraph();
     // dag.printTaskGraph();
 
+    // Topological Sort (Forward Pass)
     start = high_resolution_clock::now();
-
-    std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
-
+    std::vector<int> sorted = dag.topologicalSort(asic, cell_map);  // Specified vector type
     end = high_resolution_clock::now();
-    duration = duration_cast<microseconds>(end - start).count();
-    cout << "\n[Time] Topological Sort (Forward Pass): " << duration << " us" << endl;
+    topological_sort_duration = duration_cast<microseconds>(end - start).count();
+    std::cout << "\n[Time] Topological Sort (Forward Pass): " << topological_sort_duration << " us" << std::endl;
 
+    // Timing analysis (Backward Pass)
     start = high_resolution_clock::now();
-
-    std::unordered_map<int, float> slack = dag.analyzeTiming(asic, cell_map, sorted);
-
+    std::unordered_map<int, float> slack = dag.analyzeTiming(asic, cell_map, sorted);  // Specified unordered_map type
     end = high_resolution_clock::now();
-    duration = duration_cast<microseconds>(end - start).count();
-    cout << "\n[Time] Analyze Timing (Backward Pass): " << duration << " us" << endl;
+    analyze_timing_duration = duration_cast<microseconds>(end - start).count();
+    std::cout << "\n[Time] Analyze Timing (Backward Pass): " << analyze_timing_duration << " us" << std::endl;
 
+    // Results
     std::cout << "\nRESULTS:" << std::endl;
 
-    for (const auto &[net, s] : slack)
+    for (const std::pair<int, float>& entry : slack)  // Explicitly specify pair type
     {
+        const int& net = entry.first;
+        const float& s = entry.second;
+
         std::string name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
         std::cout << "Node " << name << " (ID: " << net << ") | Slack: " << s;
 
@@ -97,5 +102,16 @@ int main(int argc, char **argv)
 
         std::cout << std::endl;
     }
+
+    // Displaying the times at the end
+    std::cout << "\n[Time Summary]" << std::endl;
+    std::cout << "Parsing JSON: " << parse_json_duration << " us" << std::endl;
+    std::cout << "Creating Cell Map: " << create_cell_map_duration << " us" << std::endl;
+    std::cout << "Building DAG: " << build_dag_duration << " us" << std::endl;
+    std::cout << "Topological Sort (Forward Pass): " << topological_sort_duration << " us" << std::endl;
+    std::cout << "Analyze Timing (Backward Pass): " << analyze_timing_duration << " us" << std::endl;
+
     std::cout << "BYE!" << std::endl;
+
+    return 0;
 }

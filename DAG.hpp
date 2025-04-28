@@ -26,10 +26,16 @@ private:
 
 
 public:
-    struct DelaySlewInfo {
+
+    struct rcInfo {
         int current_cell_id; // ID of the current cell
         int neighbor_cell_id; // ID of the neighbor cell
         double rc_delay; // RC delay value
+    };
+
+    struct slewInfo {
+        int current_cell_id; // ID of the current cell
+        int neighbor_cell_id; // ID of the neighbor cell
         double slew_rate; // Slew rate value
     };
     // Adds a directed edge from 'from' node to 'to' node
@@ -44,12 +50,15 @@ public:
     void removeCycles(); // Performs topological sort on the DAG and returns the sorted order
     std::vector<int> topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map);   
     void updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map);
-    double computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell);
-    double computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,double rc_delay);
+    double computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell,int current_id, int neighbor_id);
+    double computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell, int current_cell_id, int neighboor_cell_id);
     std::unordered_map<int, float> analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted);
     std::unordered_map<int, double> rc_delay_map; // node_id → RC delay
-    std::vector<DelaySlewInfo> delays_and_slews;
+    std::vector<slewInfo> slew_value;
+    std::vector<rcInfo> rc_value;
+    std::vector<int> topological_TaskGraph(DAG& dag,const std::map<int, Cell>& cell_map);
     std::map<std::string, std::vector<std::string>> taskGraph;
+    void processQueue(const std::string& task, DAG& dag,const std::map<int, Cell>& cell_map);
     void printTaskGraph();
 
 
