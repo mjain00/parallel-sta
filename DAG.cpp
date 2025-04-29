@@ -455,7 +455,7 @@ void DAG::propagateFanin(int node, const std::map<int, Cell> &cell_map, const AS
 
     if (required_time.find(node) == required_time.end())
     {
-        return;
+        required_time[node] = INT64_MAX;
     }
 
     float cell_delay = 0.0f;
@@ -599,7 +599,7 @@ std::unordered_map<int, float> DAG::calculateSlack(const ASIC &asic, const std::
 
             if (required_time.find(current) == required_time.end())
             {
-                required_time[current] = INT32_MAX;
+                required_time[current] = INT64_MAX;
             }
 
             if (reverseAdjList.count(current))
@@ -701,7 +701,7 @@ std::unordered_map<int, float> DAG::analyzeTiming(const ASIC &asic, const std::m
 
         if (required_time.find(current) == required_time.end())
         {
-            required_time[current] = INT32_MAX;
+            required_time[current] = INT64_MAX;
         }
 
         if (reverseAdjList.count(current))
