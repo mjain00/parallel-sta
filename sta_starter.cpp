@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 {
     std::cout << "Static Timing Analysis" << std::endl;
 
-    string filename = "circuits/json/simple.json";
+    string filename = "circuits/json/bigcircuit.json";
 
     if (argc > 1 && argc < 4)
     {
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     auto duration = duration_cast<microseconds>(end - start).count();
     cout << "\n[Time] Parsing JSON: " << filename << "took: " << duration << " us" << endl;
 
-    //display_asic(asic);
+    display_asic(asic);
 
     start = high_resolution_clock::now();
     map<int, Cell> cell_map = create_cell_map(asic.cells);
@@ -58,21 +58,18 @@ int main(int argc, char **argv)
     cout << "\n[Time] Building DAG: " << duration << " us" << endl;
 
     std::cout << "\nDAG Representation of the ASIC:" << std::endl;
-//    dag.displayGraph(asic);
+    dag.displayGraph(asic);
     dag.removeCycles();
-    // dag.createTaskGraph();
-    // dag.printTaskGraph();
 
     std::vector<std::vector<int>> level_list = dag.createLevelList(asic, cell_map);
 
     start = high_resolution_clock::now();
-    // std::vector<int> sorted = dag.topologicalSort(asic, cell_map);
     dag.forwardPropagation(asic, cell_map, level_list);
 
     end = high_resolution_clock::now();
     duration = duration_cast<microseconds>(end - start).count();
     cout << "\n[Time] Topological Sort (Forward Pass): " << duration << " us" << endl;
-/*
+
     for (int i = 0; i < level_list.size(); ++i)
     {
         std::cout << "Level " << i << ": " << "size: " << level_list[i].size() << ": ";
@@ -83,17 +80,14 @@ int main(int argc, char **argv)
         std::cout << std::endl;
     }
     std::cout << endl;
-*/
-    start = high_resolution_clock::now();
 
-    // std::unordered_map<int, float> slack = dag.analyzeTiming(asic, cell_map, sorted);
-    // std::unordered_map<int, float> slack = dag.calculateSlack(asic, cell_map, level_list);
+    start = high_resolution_clock::now();
 
     dag.backwardPropagation(asic, cell_map, level_list);
     end = high_resolution_clock::now();
     duration = duration_cast<microseconds>(end - start).count();
     cout << "\n[Time] Analyze Timing (Backward Pass): " << duration << " us" << endl;
-/*
+
     std::cout << "\nRESULTS:" << std::endl;
     std::unordered_map<int, float> slack = dag.getSlack();
     for (const auto &[net, s] : slack)
@@ -113,6 +107,6 @@ int main(int argc, char **argv)
         std::cout << std::endl;
     }
 
-*/
-    std::cout << "BYE!\n\n" << std::endl;
+    std::cout << "BYE!\n\n"
+              << std::endl;
 }

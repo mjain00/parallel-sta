@@ -448,14 +448,10 @@ ASIC parse_json(const string &filename)
 
     try
     {
-        // std::cout << "Modules found: " << data["modules"].size() << "\n";
         for (auto &[top_name, module_data] : data["modules"].items())
         {
-            // std::cout << "Processing module: " << top_name << "\n";
-
             if (!module_data.contains("cells"))
             {
-                // std::cout << "No cells in module: " << top_name << "\n";
                 continue;
             }
 
@@ -464,12 +460,10 @@ ASIC parse_json(const string &filename)
 
             for (const auto &cell : cell_dict)
             {
-                // std::cout << "Processing cell...\n";
                 Cell new_cell;
 
                 std::string type_str = cell["type"];
-                // std::cout << "  Cell type: " << type_str << "\n";
-
+      
                 CellType type = parse_cell_type(type_str);
                 new_cell.type = type;
                 new_cell.delay = get_delay(type);
@@ -478,28 +472,22 @@ ASIC parse_json(const string &filename)
 
                 for (auto &[connection, bits] : cell["connections"].items())
                 {
-                    // std::cout << "  Processing connection: " << connection << "\n";
-
+      
                     if (!cell.contains("port_directions"))
                     {
-                        // std::cerr << "Cell missing 'port_directions' field. Skipping...\n";
                         continue;
                     }
 
                     if (!cell["port_directions"].contains(connection))
                     {
-                        // std::cerr << "No port direction found for connection '" << connection << "'. Skipping...\n";
                         continue;
                     }
 
                     const auto &direction = cell["port_directions"][connection];
                     if (!direction.is_string())
                     {
-                        // std::cerr << "Direction at connection '" << connection << "' is not a string! Skipping...\n";
                         continue;
                     }
-
-                    // std::cout << "    Direction: " << direction << "\n";
 
                     if (direction == "input")
                     {
@@ -507,12 +495,10 @@ ASIC parse_json(const string &filename)
                         {
                             if (!bit.is_number())
                             {
-                                // std::cerr << "    Expected number in input bits but got: " << bit << "\n";
                                 continue;
                             }
 
                             int bit_val = bit.get<int>();
-                            // std::cout << "    Input bit: " << bit_val << "\n";
 
                             if (type != CellType::DFF_P || connection != "C")
                             {
@@ -530,12 +516,10 @@ ASIC parse_json(const string &filename)
                         {
                             if (!bit.is_number())
                             {
-                                // std::cerr << "    Expected number in output bits but got: " << bit << "\n";
                                 continue;
                             }
 
                             int bit_val = bit.get<int>();
-                            // std::cout << "    Output bit: " << bit_val << "\n";
 
                             new_cell.outputs.push_back(bit_val);
                             output_bits.push_back(bit_val);
@@ -553,35 +537,26 @@ ASIC parse_json(const string &filename)
                 }
 
                 asic.cells.push_back(new_cell);
-                // std::cout << "  Cell added. ID: " << new_cell.id << "\n";
             }
 
-            // std::cout << "Processing ports...\n";
             auto &port_dict = module_data["ports"];
 
             for (auto &[port_name, port_details] : port_dict.items())
             {
-                // std::cout << "  Port: " << port_name << "\n";
-
                 const auto &direction = port_details["direction"];
                 if (!direction.is_string())
                 {
-                    // std::cerr << "    Port direction for " << port_name << " is not a string\n";
                     continue;
                 }
-
-                // std::cout << "    Direction: " << direction << "\n";
 
                 for (auto &bit : port_details["bits"])
                 {
                     if (!bit.is_number())
                     {
-                        // std::cerr << "    Expected number in port bits but got: " << bit << "\n";
                         continue;
                     }
 
                     int bit_val = bit.get<int>();
-                    // std::cout << "    Bit: " << bit_val << "\n";
 
                     if (direction == "input")
                     {
@@ -597,18 +572,15 @@ ASIC parse_json(const string &filename)
                 }
             }
 
-            // std::cout << "Processing netnames...\n";
             auto &net_names = module_data["netnames"];
             for (auto &[net_name, net_info] : net_names.items())
             {
-                // std::cout << "  Netname: " << net_name << "\n";
                 auto &bit_list = net_info["bits"];
 
                 for (int i = 0; i < bit_list.size(); i++)
                 {
                     if (!bit_list[i].is_number())
                     {
-                        // std::cerr << "    Netname bit is not a number: " << bit_list[i] << "\n";
                         continue;
                     }
 
