@@ -19,7 +19,7 @@ void display_asic(const ASIC &asic)
         cout << "Cell Type: " << static_cast<int>(cell.type) << endl;
         cout << "Delay: " << cell.delay << endl;
         cout << "Resistance: " << cell.resistance << endl;
-        cout << "Cap: " << cell.capacitance<< endl;
+        cout << "Cap: " << cell.capacitance << endl;
 
         cout << "Inputs: ";
         for (const auto &input : cell.inputs)
@@ -32,7 +32,8 @@ void display_asic(const ASIC &asic)
         {
             cout << output << " ";
         }
-        cout << endl << endl;
+        cout << endl
+             << endl;
     }
 
     cout << "IO list:" << endl;
@@ -47,14 +48,16 @@ void display_asic(const ASIC &asic)
     {
         cout << output << " ";
     }
-    cout << endl << endl;
+    cout << endl
+         << endl;
 
     cout << "Paths: ";
     for (const auto &path : asic.paths)
     {
         cout << path << " ";
     }
-    cout << endl << endl;
+    cout << endl
+         << endl;
 
     cout << "Net Mappings:" << endl;
     for (const auto &pair : asic.net_dict)
@@ -63,99 +66,103 @@ void display_asic(const ASIC &asic)
     }
 }
 
-map<int, Cell> create_cell_map(const vector<Cell>& cells) {
+map<int, Cell> create_cell_map(const vector<Cell> &cells)
+{
     map<int, Cell> cell_map;
-    for (const auto& cell : cells) {
+    for (const auto &cell : cells)
+    {
         cell_map[cell.id] = cell;
     }
     return cell_map;
 }
 
-std::unordered_map<CellType, std::pair<double, double>> get_rc_values() {
+std::unordered_map<CellType, std::pair<double, double>> get_rc_values()
+{
     using CT = CellType;
     std::unordered_map<CellType, std::pair<double, double>> rc_values = {
-        {CT::AND,        {150, 0.4e-12}},
-        {CT::AND2_X2,    {125, 0.35e-12}},
-        {CT::AND2_X4,    {150, 0.4e-12}},
-        {CT::AND3_X2,    {175, 0.45e-12}},
-        {CT::AND3_X4,    {200, 0.5e-12}},
-        {CT::AND4_X2,    {100, 0.3e-12}},
-        {CT::AND4_X4,    {125, 0.35e-12}},
-        {CT::AOI211_X2,  {150, 0.4e-12}},
-        {CT::AOI21_X2,   {175, 0.45e-12}},
-        {CT::AOI21_X4,   {200, 0.5e-12}},
-        {CT::AOI221_X2,  {100, 0.3e-12}},
-        {CT::AOI222_X1,  {125, 0.35e-12}},
-        {CT::AOI222_X2,  {150, 0.4e-12}},
-        {CT::AOI22_X2,   {175, 0.45e-12}},
-        {CT::CLKBUF_X1,  {200, 0.5e-12}},
-        {CT::CLKBUF_X2,  {100, 0.3e-12}},
-        {CT::DFFR_X1,    {125, 0.35e-12}},
-        {CT::DFFR_X2,    {150, 0.4e-12}},
-        {CT::DFFS_X2,    {175, 0.45e-12}},
-        {CT::DFF_P,      {175, 0.45e-12}},
-        {CT::DFF_PN0,    {200, 0.5e-12}},
-        {CT::DFF_X1,     {200, 0.5e-12}},
-        {CT::DFF_X2,     {100, 0.3e-12}},
-        {CT::HA_X1,      {125, 0.35e-12}},
-        {CT::INV_X1,     {150, 0.4e-12}},
-        {CT::INV_X16,    {175, 0.45e-12}},
-        {CT::INV_X2,     {200, 0.5e-12}},
-        {CT::INV_X32,    {100, 0.3e-12}},
-        {CT::INV_X4,     {125, 0.35e-12}},
-        {CT::INV_X8,     {150, 0.4e-12}},
-        {CT::MUX,        {100, 0.3e-12}},
-        {CT::MUX2_X1,    {175, 0.45e-12}},
-        {CT::NAND,       {100, 0.3e-12}},
-        {CT::NAND2_X1,   {200, 0.5e-12}},
-        {CT::NAND2_X2,   {100, 0.3e-12}},
-        {CT::NAND2_X4,   {125, 0.35e-12}},
-        {CT::NAND3_X2,   {150, 0.4e-12}},
-        {CT::NAND3_X4,   {175, 0.45e-12}},
-        {CT::NAND4_X2,   {200, 0.5e-12}},
-        {CT::NOR,        {125, 0.35e-12}},
-        {CT::NOR2_X2,    {100, 0.3e-12}},
-        {CT::NOR2_X4,    {125, 0.35e-12}},
-        {CT::NOR3_X2,    {150, 0.4e-12}},
-        {CT::NOR3_X4,    {175, 0.45e-12}},
-        {CT::NOR4_X2,    {200, 0.5e-12}},
-        {CT::NOT,        {125, 0.35e-12}},
-        {CT::OAI211_X2,  {100, 0.3e-12}},
-        {CT::OAI21_X2,   {125, 0.35e-12}},
-        {CT::OAI221_X2,  {150, 0.4e-12}},
-        {CT::OAI222_X2,  {175, 0.45e-12}},
-        {CT::OAI22_X1,   {200, 0.5e-12}},
-        {CT::OAI22_X2,   {100, 0.3e-12}},
-        {CT::OR,         {175, 0.45e-12}},
-        {CT::OR2_X2,     {125, 0.35e-12}},
-        {CT::OR2_X4,     {150, 0.4e-12}},
-        {CT::SDFFR_X2,   {175, 0.45e-12}},
-        {CT::SDFF_X2,    {200, 0.5e-12}},
-        {CT::XNOR,       {150, 0.4e-12}},
-        {CT::XNOR2_X2,   {100, 0.3e-12}},
-        {CT::XOR,        {200, 0.5e-12}},
-        {CT::XOR2_X2,    {125, 0.35e-12}},
-        {CT::UNKNOWN,    {100, 0.3e-12}}
-    };
+        {CT::AND, {150, 0.4e-12}},
+        {CT::AND2_X2, {125, 0.35e-12}},
+        {CT::AND2_X4, {150, 0.4e-12}},
+        {CT::AND3_X2, {175, 0.45e-12}},
+        {CT::AND3_X4, {200, 0.5e-12}},
+        {CT::AND4_X2, {100, 0.3e-12}},
+        {CT::AND4_X4, {125, 0.35e-12}},
+        {CT::AOI211_X2, {150, 0.4e-12}},
+        {CT::AOI21_X2, {175, 0.45e-12}},
+        {CT::AOI21_X4, {200, 0.5e-12}},
+        {CT::AOI221_X2, {100, 0.3e-12}},
+        {CT::AOI222_X1, {125, 0.35e-12}},
+        {CT::AOI222_X2, {150, 0.4e-12}},
+        {CT::AOI22_X2, {175, 0.45e-12}},
+        {CT::CLKBUF_X1, {200, 0.5e-12}},
+        {CT::CLKBUF_X2, {100, 0.3e-12}},
+        {CT::DFFR_X1, {125, 0.35e-12}},
+        {CT::DFFR_X2, {150, 0.4e-12}},
+        {CT::DFFS_X2, {175, 0.45e-12}},
+        {CT::DFF_P, {175, 0.45e-12}},
+        {CT::DFF_PN0, {200, 0.5e-12}},
+        {CT::DFF_X1, {200, 0.5e-12}},
+        {CT::DFF_X2, {100, 0.3e-12}},
+        {CT::HA_X1, {125, 0.35e-12}},
+        {CT::INV_X1, {150, 0.4e-12}},
+        {CT::INV_X16, {175, 0.45e-12}},
+        {CT::INV_X2, {200, 0.5e-12}},
+        {CT::INV_X32, {100, 0.3e-12}},
+        {CT::INV_X4, {125, 0.35e-12}},
+        {CT::INV_X8, {150, 0.4e-12}},
+        {CT::MUX, {100, 0.3e-12}},
+        {CT::MUX2_X1, {175, 0.45e-12}},
+        {CT::NAND, {100, 0.3e-12}},
+        {CT::NAND2_X1, {200, 0.5e-12}},
+        {CT::NAND2_X2, {100, 0.3e-12}},
+        {CT::NAND2_X4, {125, 0.35e-12}},
+        {CT::NAND3_X2, {150, 0.4e-12}},
+        {CT::NAND3_X4, {175, 0.45e-12}},
+        {CT::NAND4_X2, {200, 0.5e-12}},
+        {CT::NOR, {125, 0.35e-12}},
+        {CT::NOR2_X2, {100, 0.3e-12}},
+        {CT::NOR2_X4, {125, 0.35e-12}},
+        {CT::NOR3_X2, {150, 0.4e-12}},
+        {CT::NOR3_X4, {175, 0.45e-12}},
+        {CT::NOR4_X2, {200, 0.5e-12}},
+        {CT::NOT, {125, 0.35e-12}},
+        {CT::OAI211_X2, {100, 0.3e-12}},
+        {CT::OAI21_X2, {125, 0.35e-12}},
+        {CT::OAI221_X2, {150, 0.4e-12}},
+        {CT::OAI222_X2, {175, 0.45e-12}},
+        {CT::OAI22_X1, {200, 0.5e-12}},
+        {CT::OAI22_X2, {100, 0.3e-12}},
+        {CT::OR, {175, 0.45e-12}},
+        {CT::OR2_X2, {125, 0.35e-12}},
+        {CT::OR2_X4, {150, 0.4e-12}},
+        {CT::SDFFR_X2, {175, 0.45e-12}},
+        {CT::SDFF_X2, {200, 0.5e-12}},
+        {CT::XNOR, {150, 0.4e-12}},
+        {CT::XNOR2_X2, {100, 0.3e-12}},
+        {CT::XOR, {200, 0.5e-12}},
+        {CT::XOR2_X2, {125, 0.35e-12}},
+        {CT::UNKNOWN, {100, 0.3e-12}}};
     return rc_values;
 }
 
-void assign_rc_to_cells(ASIC& asic) {
+void assign_rc_to_cells(ASIC &asic)
+{
     auto rc_map = get_rc_values();
-    for (auto& cell : asic.cells) {
+    for (auto &cell : asic.cells)
+    {
         auto it = rc_map.find(cell.type);
-        if (it != rc_map.end()) {
+        if (it != rc_map.end())
+        {
             cell.resistance = it->second.first;
             cell.capacitance = it->second.second;
-        } else {
-            cell.resistance = 100;       // fallback/default
+        }
+        else
+        {
+            cell.resistance = 100; // fallback/default
             cell.capacitance = 0.3e-12;
         }
     }
 }
-
-
-
 
 CellType parse_cell_type(const std::string &type_str)
 {
@@ -288,13 +295,20 @@ int get_delay(CellType type)
 {
     switch (type)
     {
-    case CellType::NOT: return 5;
-    case CellType::AND: return 9;
-    case CellType::OR: return 9;
-    case CellType::XOR: return 12;
-    case CellType::NAND: return 13;
-    case CellType::NOR: return 12;
-    case CellType::XNOR: return 12;
+    case CellType::NOT:
+        return 5;
+    case CellType::AND:
+        return 9;
+    case CellType::OR:
+        return 9;
+    case CellType::XOR:
+        return 12;
+    case CellType::NAND:
+        return 13;
+    case CellType::NOR:
+        return 12;
+    case CellType::XNOR:
+        return 12;
 
     case CellType::DFF_P:
     case CellType::DFF_PN0:
@@ -308,66 +322,109 @@ int get_delay(CellType type)
         return -1;
 
     case CellType::MUX:
-    case CellType::MUX2_X1: return 14;
+    case CellType::MUX2_X1:
+        return 14;
 
-    case CellType::HA_X1: return 15;
+    case CellType::HA_X1:
+        return 15;
 
-    case CellType::INV_X1: return 5;
-    case CellType::INV_X2: return 4;
-    case CellType::INV_X4: return 3;
-    case CellType::INV_X8: return 2;
-    case CellType::INV_X16: return 2;
-    case CellType::INV_X32: return 1;
+    case CellType::INV_X1:
+        return 5;
+    case CellType::INV_X2:
+        return 4;
+    case CellType::INV_X4:
+        return 3;
+    case CellType::INV_X8:
+        return 2;
+    case CellType::INV_X16:
+        return 2;
+    case CellType::INV_X32:
+        return 1;
 
-    case CellType::AND2_X2: return 8;
-    case CellType::AND2_X4: return 7;
-    case CellType::AND3_X2: return 10;
-    case CellType::AND3_X4: return 9;
-    case CellType::AND4_X2: return 12;
-    case CellType::AND4_X4: return 11;
+    case CellType::AND2_X2:
+        return 8;
+    case CellType::AND2_X4:
+        return 7;
+    case CellType::AND3_X2:
+        return 10;
+    case CellType::AND3_X4:
+        return 9;
+    case CellType::AND4_X2:
+        return 12;
+    case CellType::AND4_X4:
+        return 11;
 
-    case CellType::NAND2_X1: return 10;
-    case CellType::NAND2_X2: return 9;
-    case CellType::NAND2_X4: return 8;
-    case CellType::NAND3_X2: return 11;
-    case CellType::NAND3_X4: return 10;
-    case CellType::NAND4_X2: return 13;
+    case CellType::NAND2_X1:
+        return 10;
+    case CellType::NAND2_X2:
+        return 9;
+    case CellType::NAND2_X4:
+        return 8;
+    case CellType::NAND3_X2:
+        return 11;
+    case CellType::NAND3_X4:
+        return 10;
+    case CellType::NAND4_X2:
+        return 13;
 
-    case CellType::OR2_X2: return 8;
-    case CellType::OR2_X4: return 7;
+    case CellType::OR2_X2:
+        return 8;
+    case CellType::OR2_X4:
+        return 7;
 
-    case CellType::NOR2_X2: return 9;
-    case CellType::NOR2_X4: return 8;
-    case CellType::NOR3_X2: return 10;
-    case CellType::NOR3_X4: return 9;
-    case CellType::NOR4_X2: return 12;
+    case CellType::NOR2_X2:
+        return 9;
+    case CellType::NOR2_X4:
+        return 8;
+    case CellType::NOR3_X2:
+        return 10;
+    case CellType::NOR3_X4:
+        return 9;
+    case CellType::NOR4_X2:
+        return 12;
 
-    case CellType::AOI211_X2: return 13;
-    case CellType::AOI21_X2: return 12;
-    case CellType::AOI21_X4: return 11;
-    case CellType::AOI221_X2: return 14;
-    case CellType::AOI222_X1: return 14;
-    case CellType::AOI222_X2: return 13;
-    case CellType::AOI22_X2: return 13;
+    case CellType::AOI211_X2:
+        return 13;
+    case CellType::AOI21_X2:
+        return 12;
+    case CellType::AOI21_X4:
+        return 11;
+    case CellType::AOI221_X2:
+        return 14;
+    case CellType::AOI222_X1:
+        return 14;
+    case CellType::AOI222_X2:
+        return 13;
+    case CellType::AOI22_X2:
+        return 13;
 
-    case CellType::CLKBUF_X1: return 3;
-    case CellType::CLKBUF_X2: return 2;
+    case CellType::CLKBUF_X1:
+        return 3;
+    case CellType::CLKBUF_X2:
+        return 2;
 
-    case CellType::OAI211_X2: return 13;
-    case CellType::OAI21_X2: return 12;
-    case CellType::OAI221_X2: return 14;
-    case CellType::OAI222_X2: return 14;
-    case CellType::OAI22_X1: return 13;
-    case CellType::OAI22_X2: return 12;
+    case CellType::OAI211_X2:
+        return 13;
+    case CellType::OAI21_X2:
+        return 12;
+    case CellType::OAI221_X2:
+        return 14;
+    case CellType::OAI222_X2:
+        return 14;
+    case CellType::OAI22_X1:
+        return 13;
+    case CellType::OAI22_X2:
+        return 12;
 
-    case CellType::XNOR2_X2: return 12;
-    case CellType::XOR2_X2: return 12;
+    case CellType::XNOR2_X2:
+        return 12;
+    case CellType::XOR2_X2:
+        return 12;
 
     default:
         return 0;
     }
 }
-
 
 ASIC parse_json(const string &filename)
 {
@@ -376,23 +433,28 @@ ASIC parse_json(const string &filename)
     std::ifstream file(filename);
     json data;
 
-    try {
+    try
+    {
         file >> data;
         std::cout << "JSON file successfully parsed.\n";
-    } catch (const std::exception &e) {
+    }
+    catch (const std::exception &e)
+    {
         std::cerr << "Error parsing JSON file: " << e.what() << std::endl;
         return asic;
     }
 
     int clock = -1;
 
-    try {
+    try
+    {
         std::cout << "Modules found: " << data["modules"].size() << "\n";
         for (auto &[top_name, module_data] : data["modules"].items())
         {
             std::cout << "Processing module: " << top_name << "\n";
 
-            if (!module_data.contains("cells")) {
+            if (!module_data.contains("cells"))
+            {
                 std::cout << "No cells in module: " << top_name << "\n";
                 continue;
             }
@@ -418,18 +480,21 @@ ASIC parse_json(const string &filename)
                 {
                     std::cout << "  Processing connection: " << connection << "\n";
 
-                    if (!cell.contains("port_directions")) {
+                    if (!cell.contains("port_directions"))
+                    {
                         std::cerr << "Cell missing 'port_directions' field. Skipping...\n";
                         continue;
                     }
-                    
-                    if (!cell["port_directions"].contains(connection)) {
+
+                    if (!cell["port_directions"].contains(connection))
+                    {
                         std::cerr << "No port direction found for connection '" << connection << "'. Skipping...\n";
                         continue;
                     }
-                    
+
                     const auto &direction = cell["port_directions"][connection];
-                    if (!direction.is_string()) {
+                    if (!direction.is_string())
+                    {
                         std::cerr << "Direction at connection '" << connection << "' is not a string! Skipping...\n";
                         continue;
                     }
@@ -440,7 +505,8 @@ ASIC parse_json(const string &filename)
                     {
                         for (auto &bit : bits)
                         {
-                            if (!bit.is_number()) {
+                            if (!bit.is_number())
+                            {
                                 std::cerr << "    Expected number in input bits but got: " << bit << "\n";
                                 continue;
                             }
@@ -462,7 +528,8 @@ ASIC parse_json(const string &filename)
                     {
                         for (auto &bit : bits)
                         {
-                            if (!bit.is_number()) {
+                            if (!bit.is_number())
+                            {
                                 std::cerr << "    Expected number in output bits but got: " << bit << "\n";
                                 continue;
                             }
@@ -476,9 +543,12 @@ ASIC parse_json(const string &filename)
                     }
                 }
 
-                if (!output_bits.empty()) {
+                if (!output_bits.empty())
+                {
                     new_cell.id = output_bits[0];
-                } else {
+                }
+                else
+                {
                     new_cell.id = -1;
                 }
 
@@ -494,7 +564,8 @@ ASIC parse_json(const string &filename)
                 std::cout << "  Port: " << port_name << "\n";
 
                 const auto &direction = port_details["direction"];
-                if (!direction.is_string()) {
+                if (!direction.is_string())
+                {
                     std::cerr << "    Port direction for " << port_name << " is not a string\n";
                     continue;
                 }
@@ -503,7 +574,8 @@ ASIC parse_json(const string &filename)
 
                 for (auto &bit : port_details["bits"])
                 {
-                    if (!bit.is_number()) {
+                    if (!bit.is_number())
+                    {
                         std::cerr << "    Expected number in port bits but got: " << bit << "\n";
                         continue;
                     }
@@ -534,7 +606,8 @@ ASIC parse_json(const string &filename)
 
                 for (int i = 0; i < bit_list.size(); i++)
                 {
-                    if (!bit_list[i].is_number()) {
+                    if (!bit_list[i].is_number())
+                    {
                         std::cerr << "    Netname bit is not a number: " << bit_list[i] << "\n";
                         continue;
                     }
@@ -550,9 +623,13 @@ ASIC parse_json(const string &filename)
                 }
             }
         }
-    } catch (const nlohmann::json::type_error &e) {
+    }
+    catch (const nlohmann::json::type_error &e)
+    {
         std::cerr << "JSON type error: " << e.what() << std::endl;
-    } catch (const std::exception &e) {
+    }
+    catch (const std::exception &e)
+    {
         std::cerr << "Exception while parsing JSON: " << e.what() << std::endl;
     }
 
