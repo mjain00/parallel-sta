@@ -55,8 +55,6 @@ int main(int argc, char** argv)
     std::cout << "\nDAG Representation of the ASIC:" << std::endl;
     dag.displayGraph(asic);
     dag.removeCycles();
-    // dag.createTaskGraph();
-    // dag.printTaskGraph();
 
     start = high_resolution_clock::now();
     
@@ -90,5 +88,5 @@ int main(int argc, char** argv)
     }
     std::cout << "BYE! part1" << std::endl;
     cout << "\n[Time] Topological Sort (Forward Pass): " << duration_top << " us" << endl;
-
+    cout << "\n[Time] Analyze Timing (Backward Pass): " << duration << " us" << endl;
 }
