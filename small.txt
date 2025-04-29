@@ -1,0 +1,540 @@
+Static Timing Analysis
+JSON file successfully parsed.
+Modules found: 1
+Processing module: simple
+Processing cell...
+  Cell type: $_XOR_
+  Processing connection: A
+    Direction: "input"
+    Input bit: 6
+  Processing connection: B
+    Direction: "input"
+    Input bit: 7
+  Processing connection: Y
+    Direction: "output"
+    Output bit: 8
+  Cell added. ID: 8
+Processing cell...
+  Cell type: $_DFF_P_
+  Processing connection: C
+    Direction: "input"
+    Input bit: 5
+  Processing connection: D
+    Direction: "input"
+    Input bit: 8
+  Processing connection: Q
+    Direction: "output"
+    Output bit: 4
+  Cell added. ID: 4
+Processing cell...
+  Cell type: $_DFF_P_
+  Processing connection: C
+    Direction: "input"
+    Input bit: 5
+  Processing connection: D
+    Direction: "input"
+    Input bit: 2
+  Processing connection: Q
+    Direction: "output"
+    Output bit: 6
+  Cell added. ID: 6
+Processing cell...
+  Cell type: $_DFF_P_
+  Processing connection: C
+    Direction: "input"
+    Input bit: 5
+  Processing connection: D
+    Direction: "input"
+    Input bit: 3
+  Processing connection: Q
+    Direction: "output"
+    Output bit: 7
+  Cell added. ID: 7
+Processing ports...
+  Port: a
+    Direction: "input"
+    Bit: 2
+  Port: b
+    Direction: "input"
+    Bit: 3
+  Port: clk
+    Direction: "input"
+    Bit: 5
+  Port: x
+    Direction: "output"
+    Bit: 4
+Processing netnames...
+  Netname: $0\x[0:0]
+  Netname: $abc$89$0\x[0:0]
+  Netname: $abc$89$a_
+  Netname: $abc$89$b_
+  Netname: a
+  Netname: a_
+  Netname: b
+  Netname: b_
+  Netname: clk
+  Netname: x
+Finished parsing JSON.
+
+[Time] Parsing JSON: 1951 us
+ASIC Details:
+
+
+Cell List:
+Cell ID: 8
+Cell Type: 4
+Delay: 12
+Resistance: 200
+Cap: 5e-13
+Inputs: 6 7 
+Outputs: 8 
+
+Cell ID: 4
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 8 
+Outputs: 4 
+
+Cell ID: 6
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 2 
+Outputs: 6 
+
+Cell ID: 7
+Cell Type: 8
+Delay: -1
+Resistance: 175
+Cap: 4.5e-13
+Inputs: 3 
+Outputs: 7 
+
+IO list:
+Inputs: 2 3 
+Outputs: 4 
+
+Paths: 
+
+Net Mappings:
+[2] -> a
+[3] -> b
+[4] -> x
+[5] -> clk
+[6] -> a_
+[7] -> b_
+[8] -> $abc$89$0\x[0:0]
+
+[Time] Creating Cell Map: 3 us
+
+[Time] Building DAG: 4 us
+
+DAG Representation of the ASIC:
+Node a (ID: 2) has edges to: a_ (ID: 6) 
+Node b (ID: 3) has edges to: b_ (ID: 7) 
+Node a_ (ID: 6) has edges to: $abc$89$0\x[0:0] (ID: 8) 
+Node b_ (ID: 7) has edges to: $abc$89$0\x[0:0] (ID: 8) 
+Node $abc$89$0\x[0:0] (ID: 8) has edges to: x (ID: 4) 
+We are done with back edge: 
+Processing fanin: 8 for node 4
+Processing fanin: 6 for node 8
+Processing fanin: 7 for node 8
+Processing fanin: 2 for node 6
+Processing fanin: 3 for node 7
+Done creating task graph (forward + backward after outputs)!
+Output x (ID: 4) → Required time = 42
+We are printing the taskgraphTask Graph Dependencies (DAG):
+2_arrival -> 6_rc 
+2_rc -> 2_slew 
+2_slew -> 2_arrival 
+3_arrival -> 7_rc 
+3_rc -> 3_slew 
+3_slew -> 3_arrival 
+4_arrival -> 4_be_required 
+4_be_required -> 8_be_required 
+4_rc -> 4_slew 
+4_slew -> 4_arrival 
+6_arrival -> 8_rc 
+6_be_required -> 2_be_required 
+6_rc -> 6_slew 
+6_slew -> 6_arrival 
+7_arrival -> 8_rc 
+7_be_required -> 3_be_required 
+7_rc -> 7_slew 
+7_slew -> 7_arrival 
+8_arrival -> 4_rc 
+8_be_required -> 6_be_required 7_be_required 
+8_rc -> 8_slew 
+8_slew -> 8_arrival 
+We are done with creating the task graph
+=== Step 1: Calculating in-degrees (TaskGraph) ===
+Edge: 2_arrival -> 6_rc | Incrementing in-degree of 6_rc to 1
+Edge: 2_rc -> 2_slew | Incrementing in-degree of 2_slew to 1
+Edge: 2_slew -> 2_arrival | Incrementing in-degree of 2_arrival to 1
+Edge: 3_arrival -> 7_rc | Incrementing in-degree of 7_rc to 1
+Edge: 3_rc -> 3_slew | Incrementing in-degree of 3_slew to 1
+Edge: 3_slew -> 3_arrival | Incrementing in-degree of 3_arrival to 1
+Edge: 4_arrival -> 4_be_required | Incrementing in-degree of 4_be_required to 1
+Edge: 4_be_required -> 8_be_required | Incrementing in-degree of 8_be_required to 1
+Edge: 4_rc -> 4_slew | Incrementing in-degree of 4_slew to 1
+Edge: 4_slew -> 4_arrival | Incrementing in-degree of 4_arrival to 1
+Edge: 6_arrival -> 8_rc | Incrementing in-degree of 8_rc to 1
+Edge: 6_be_required -> 2_be_required | Incrementing in-degree of 2_be_required to 1
+Edge: 6_rc -> 6_slew | Incrementing in-degree of 6_slew to 1
+Edge: 6_slew -> 6_arrival | Incrementing in-degree of 6_arrival to 1
+Edge: 7_arrival -> 8_rc | Incrementing in-degree of 8_rc to 2
+Edge: 7_be_required -> 3_be_required | Incrementing in-degree of 3_be_required to 1
+Edge: 7_rc -> 7_slew | Incrementing in-degree of 7_slew to 1
+Edge: 7_slew -> 7_arrival | Incrementing in-degree of 7_arrival to 1
+Edge: 8_arrival -> 4_rc | Incrementing in-degree of 4_rc to 1
+Edge: 8_be_required -> 6_be_required | Incrementing in-degree of 6_be_required to 1
+Edge: 8_be_required -> 7_be_required | Incrementing in-degree of 7_be_required to 1
+Edge: 8_rc -> 8_slew | Incrementing in-degree of 8_slew to 1
+Edge: 8_slew -> 8_arrival | Incrementing in-degree of 8_arrival to 1
+
+=== Step 2: Enqueuing in-degree 0 tasks ===
+TID: 0 | Enqueued initial task: 2_rc with in-degree = 0
+TID: 0 | Enqueued initial task: 3_rc with in-degree = 0
+
+=== Step 3: Processing task queue (parallel) ===
+
+-- New Iteration with 2 tasks in queue --
+Task in queue: 2_rc
+Task in queue: 3_rc
+TID 0 | Processing task: 2_rc | Cell ID: 2
+TID 1 | Processing task: 3_rc | Cell ID: 3
+We are done processing for rc 
+We are done processing for rc 
+TID 0 | Processed edge: 2_rc -> 2_slew | New in-degree of 2_slew = 0
+TID 0 | Enqueuing 2_slew into local next queue
+TID 1 | Processed edge: 3_rc -> 3_slew | New in-degree of 3_slew = 0
+TID 1 | Enqueuing 3_slew into local next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 1 | Merging 1 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 2
+
+-- New Iteration with 2 tasks in queue --
+Task in queue: 2_slew
+Task in queue: 3_slew
+TID 0 | Processing task: 2_slew | Cell ID: 2
+TID 1 | Processing task: 3_slew | Cell ID: 3
+We are done processing for slew 
+TID 0 | Processed edge: 2_slewWe are done processing for slew 
+ -> 2_arrival | New in-degree of 2_arrival = 0
+TID 0 | Enqueuing TID 2_arrival1 | Processed edge: 3_slew into local next queue
+ -> 3_arrival | New in-degree of 3_arrival = 0
+TID 1 | Enqueuing 3_arrival into local next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 1 | Merging 1 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 2
+
+-- New Iteration with 2 tasks in queue --
+Task in queue: 2_arrival
+Task in queue: 3_arrival
+TID 0 | Processing task: 2_arrival | Cell ID: 2
+We are done processing for arrival 
+TID 1 | Processing task: 3_arrival | Cell ID: 3
+TID 0 | Processed edge: 2_arrival -> 6_rc | New in-degree of 6_rc = 0
+TID 0 | Enqueuing 6_rc into local next queue
+We are done processing for arrival 
+TID 1 | Processed edge: 3_arrival -> 7_rc | New in-degree of 7_rc = 0
+TID 1 | Enqueuing 7_rc into local next queue
+TID 3 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 1 | Merging 1 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 2
+
+-- New Iteration with 2 tasks in queue --
+Task in queue: 6_rc
+Task in queue: 7_rc
+TID 0 | Processing task: 6_rc | Cell ID: 6TID 
+1 | Processing task: 7_rc | Cell ID: 7
+Computing RC Delay: Resistance of current cell = 6, Capacitance of neighbor cell = Computing RC Delay: Resistance of current cell = 7, Capacitance of neighbor cell = 5e-13 => RC Delay = 8.75e-11
+We are done processing for rc 
+TID 0 | Processed edge: 6_rc -> 6_slew | New in-degree of 6_slew = 0
+TID 0 | Enqueuing 6_slew into local next queue
+5e-13 => RC Delay = 8.75e-11
+We are done processing for rc 
+TID 1 | Processed edge: 7_rc -> 7_slew | New in-degree of 7_slew = 0
+TID 1 | Enqueuing 7_slew into local next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 1 | Merging 1 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 2
+
+-- New Iteration with 2 tasks in queue --
+Task in queue: 6_slew
+Task in queue: 7_slew
+TID 0 | Processing task: 6_slew | Cell ID: 6
+TID 1 | Processing task: 7_slew | Cell ID: 7
+Computing Slew Rate: Resistance of current cell = 175Computing Slew Rate: Resistance of current cell = , Capacitance of neighbor cell = 5e-13 => Slew Rate = 8.75e-11 V/s
+175, Capacitance of neighbor cell = We are done processing for slew 
+TID 0 | Processed edge: 6_slew -> 6_arrival | New in-degree of 6_arrival = 0
+TID 0 | Enqueuing 6_arrival into local next queue
+5e-13 => Slew Rate = 8.75e-11 V/s
+We are done processing for slew 
+TID 1 | Processed edge: 7_slew -> 7_arrival | New in-degree of 7_arrival = 0
+TID 1 | Enqueuing 7_arrival into local next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 1 | Merging 1 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 2
+
+-- New Iteration with 2 tasks in queue --
+Task in queue: 6_arrival
+Task in queue: 7_arrival
+TID 0 | Processing task: 6_arrivalTID  | Cell ID: 16 | Processing task: 
+7_arrival | Cell ID: 7
+The delay for rc and slew is 1.75
+Updating arrival time for cell 8: max(0, 13.75) = 13.75
+We are done processing for arrival 
+The delay for rc and slew is TID 01.75 | Processed edge: 
+6_arrival -> 8_rc | New in-degree of 8_rcUpdating arrival time for cell 8: max(0, 13.75) = 13.75
+We are done processing for arrival 
+TID 1 | Processed edge: 7_arrival -> 8_rc | New in-degree of 8_rc = 0
+ = TID 1 | Enqueuing 18_rc into local next queue
+
+TID 4 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 1 | Merging 1 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 0 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 1
+
+-- New Iteration with 1 tasks in queue --
+Task in queue: 8_rc
+TID 0 | Processing task: 8_rc | Cell ID: 8
+Computing RC Delay: Resistance of current cell = 8, Capacitance of neighbor cell = 4.5e-13 => RC Delay = 9e-11
+We are done processing for rc 
+TID 0 | Processed edge: 8_rc -> 8_slew | New in-degree of 8_slew = 0
+TID 0 | Enqueuing 8_slew into local next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 1 | Merging 0 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 1
+
+-- New Iteration with 1 tasks in queue --
+Task in queue: 8_slew
+TID 0 | Processing task: 8_slew | Cell ID: 8
+Computing Slew Rate: Resistance of current cell = 200, Capacitance of neighbor cell = 4.5e-13 => Slew Rate = 9e-11 V/s
+We are done processing for slew 
+TID 0 | Processed edge: 8_slew -> 8_arrival | New in-degree of 8_arrival = 0
+TID 0 | Enqueuing 8_arrival into local next queue
+TID 1 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 1
+
+-- New Iteration with 1 tasks in queue --
+Task in queue: 8_arrival
+TID 0 | Processing task: 8_arrival | Cell ID: 8
+The delay for rc and slew is 1.8
+Updating arrival time for cell 4: max(0, 14.55) = 14.55
+We are done processing for arrival 
+TID 0 | Processed edge: 8_arrival -> 4_rc | New in-degree of 4_rc = 0
+TID 0 | Enqueuing 4_rc into local next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 1 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 1
+
+-- New Iteration with 1 tasks in queue --
+Task in queue: 4_rc
+TID 0 | Processing task: 4_rc | Cell ID: 4
+We are done processing for rc 
+TID 0 | Processed edge: 4_rc -> 4_slew | New in-degree of 4_slew = 0
+TID 0 | Enqueuing 4_slew into local next queue
+TID 3 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 1 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 1
+
+-- New Iteration with 1 tasks in queue --
+Task in queue: 4_slew
+TID 0 | Processing task: 4_slew | Cell ID: 4
+We are done processing for slew 
+TID 0 | Processed edge: 4_slew -> 4_arrival | New in-degree of 4_arrival = 0
+TID 0 | Enqueuing 4_arrival into local next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+TID 1 | Merging 0 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 1
+
+-- New Iteration with 1 tasks in queue --
+Task in queue: 4_arrival
+TID 0 | Processing task: 4_arrival | Cell ID: 4
+We are done processing for arrival 
+TID 0 | Processed edge: 4_arrival -> 4_be_required | New in-degree of 4_be_required = 0
+TID 0 | Enqueuing 4_be_required into local next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 1 | Merging 0 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 1
+
+-- New Iteration with 1 tasks in queue --
+Task in queue: 4_be_required
+TID 0 | Processing task: 4_be_required | Cell ID: 4
+Fan-in $abc$89$0\x[0:0] (ID: 8) → Required time updated to 43 (via -1 delay)
+We are PROCESSING FOR TO BE REQUIRED 
+TID 0 | Processed edge: 4_be_required -> 8_be_required | New in-degree of 8_be_required = 0
+TID 0 | Enqueuing 8_be_required into local next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 1 | Merging 0 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 1
+
+-- New Iteration with 1 tasks in queue --
+Task in queue: 8_be_required
+TID 0 | Processing task: 8_be_required | Cell ID: 8
+Fan-in a_ (ID: 6) → Required time updated to 31 (via 12 delay)
+We are PROCESSING FOR TO BE REQUIRED 
+Fan-in b_ (ID: 7) → Required time updated to 31 (via 12 delay)
+We are PROCESSING FOR TO BE REQUIRED 
+TID 0 | Processed edge: 8_be_required -> 6_be_required | New in-degree of 6_be_required = 0
+TID 0 | Enqueuing 6_be_required into local next queue
+TID 0 | Processed edge: 8_be_required -> 7_be_required | New in-degree of 7_be_required = 0
+TID 0 | Enqueuing 7_be_required into local next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 1 | Merging 0 tasks into global next queue
+TID 0 | Merging 2 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 2
+
+-- New Iteration with 2 tasks in queue --
+Task in queue: 6_be_required
+Task in queue: 7_be_required
+TID 0 | Processing task: 6_be_required | Cell ID: 6TID 
+1 | Processing task: 7_be_required | Cell ID: 7
+Fan-in a (ID: 2) → Required time updated to Fan-in b32 (ID:  (via 3) → Required time updated to -1 delay)
+We are PROCESSING FOR TO BE REQUIRED 
+32 (via TID 0 | Processed edge: -16_be_required -> 2_be_required | New in-degree of  delay)
+We are PROCESSING FOR TO BE REQUIRED 
+2_be_required = 0
+TID 0 | Enqueuing TID 2_be_required1 | Processed edge: 7_be_required into local next queue
+ -> 3_be_required | New in-degree of 3_be_required = 0
+TID 1 | Enqueuing 3_be_required into local next queue
+TID 4 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 0 | Merging 1 tasks into global next queue
+TID 1 | Merging 1 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 2
+
+-- New Iteration with 2 tasks in queue --
+Task in queue: 2_be_required
+Task in queue: 3_be_required
+TID 0 | Processing task: 2_be_requiredTID  | Cell ID: 2
+1 | Processing task: 3_be_required | Cell ID: 3
+TID 0 | Merging 0 tasks into global next queue
+TID 5 | Merging 0 tasks into global next queue
+TID 7 | Merging 0 tasks into global next queue
+TID 6 | Merging 0 tasks into global next queue
+TID 2 | Merging 0 tasks into global next queue
+TID 1 | Merging 0 tasks into global next queue
+TID 3 | Merging 0 tasks into global next queue
+TID 4 | Merging 0 tasks into global next queue
+-- End of iteration. Total tasks queued for next round: 0
+
+=== Final Task Order (Topologically Sorted) ===
+Cell ID: 2
+Cell ID: 3
+Cell ID: 6
+Cell ID: 7
+Cell ID: 8
+Cell ID: 4
+
+[Time] Topological Sort (Forward Pass): 616 us
+
+=== Step 3: Slack Computation ===
+Net a (ID: 2) | Arrival: 0 | Required: 32 | Slack: 32
+Net b (ID: 3) | Arrival: 0 | Required: 32 | Slack: 32
+Net a_ (ID: 6) | Arrival: 0 | Required: 31 | Slack: 31
+Net b_ (ID: 7) | Arrival: 0 | Required: 31 | Slack: 31
+Net $abc$89$0\x[0:0] (ID: 8) | Arrival: 13.75 | Required: 43 | Slack: 29.25
+Net x (ID: 4) | Arrival: 14.55 | Required: 42 | Slack: 27.45
+
+[Time] Analyze Timing (Backward Pass): 36 us
+
+RESULTS:
+Node x (ID: 4) | Slack: 27.45 | Timing OK!
+Node $abc$89$0\x[0:0] (ID: 8) | Slack: 29.25 | Timing OK!
+Node b_ (ID: 7) | Slack: 31 | Timing OK!
+Node a_ (ID: 6) | Slack: 31 | Timing OK!
+Node b (ID: 3) | Slack: 32 | Timing OK!
+Node a (ID: 2) | Slack: 32 | Timing OK!
+BYE! part1
