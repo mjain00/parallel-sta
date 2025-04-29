@@ -335,52 +335,60 @@ void DAG::forwardPropagation(const ASIC &asic, const std::map<int, Cell> &cell_m
     }
 }
 
-std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell>& cell_map) {
+std::vector<int> DAG::topologicalSort(const ASIC &asic, const std::map<int, Cell> &cell_map)
+{
     std::unordered_map<int, int> inDegree;
     std::vector<int> result;
     std::queue<int> q;
-    std::cout << "WE HAVE MADE IT HER" << std::endl;
-
     // Calculate in-degrees
-    for (const auto& node : adjList) {
+    for (const auto &node : adjList)
+    {
         inDegree[node.first]; // Defaults to 0 if not present
-        for (int neighbor : node.second) {
+        for (int neighbor : node.second)
+        {
             inDegree[neighbor]++;
         }
     }
 
     // Enqueue nodes with 0 in-degree
-    for (const auto& [node, degree] : inDegree) {
-        if (degree == 0) {
+    for (const auto &[node, degree] : inDegree)
+    {
+        if (degree == 0)
+        {
             q.push(node);
             arrival_time[node] = 0;
         }
     }
 
     // Process nodes and calculate RC delay
-    while (!q.empty()) {
+    while (!q.empty())
+    {
         int current = q.front();
         q.pop();
         result.push_back(current);
 
         // For each outgoing connection from 'current', calculate RC delay
-        for (int neighbor : adjList[current]) {
+        for (int neighbor : adjList[current])
+        {
             // Check if current and neighbor are valid keys in the cell_map
-            if (cell_map.find(current) != cell_map.end() && cell_map.find(neighbor) != cell_map.end()) {
+            if (cell_map.find(current) != cell_map.end() && cell_map.find(neighbor) != cell_map.end())
+            {
                 double rc_delay = computeRCDelay(cell_map.at(current), cell_map.at(neighbor));
-                double slew_rate = computeSlewRate(cell_map.at(current), cell_map.at(neighbor),rc_delay);
+                double slew_rate = computeSlewRate(cell_map.at(current), cell_map.at(neighbor), rc_delay);
                 delays_and_slews.push_back({current, neighbor, rc_delay, slew_rate});
                 updateArrivalTime(current, neighbor, cell_map);
 
                 // You can store this RC delay or use it to update other metrics
-            } else {
+            }
+            else
+            {
                 std::cerr << "These are signals - don't correspond to components" << std::endl;
-                
             }
 
             // Decrease in-degree and enqueue if all dependencies are processed
             inDegree[neighbor]--;
-            if (inDegree[neighbor] == 0) {
+            if (inDegree[neighbor] == 0)
+            {
                 q.push(neighbor);
             }
         }
@@ -389,27 +397,32 @@ std::vector<int> DAG::topologicalSort(const ASIC& asic, const std::map<int, Cell
     return result;
 }
 
-
-void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>& cell_map) {
+void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell> &cell_map)
+{
     // Find the corresponding delay and slew between current -> neighbor
-    for (const auto& [from, to, rc_delay, slew] : delays_and_slews) {
-        if (from == current && to == neighbor) {
-            double current_cell_delay = cell_map.at(current).delay;  // Assuming 'delay' is a member of 'Cell'
-            double neighbor_cell_delay = cell_map.at(neighbor).delay;  // Assuming 'delay' is a member of 'Cell'
+    for (const auto &[from, to, rc_delay, slew] : delays_and_slews)
+    {
+        if (from == current && to == neighbor)
+        {
+            double current_cell_delay = cell_map.at(current).delay;
+            double neighbor_cell_delay = cell_map.at(neighbor).delay;
 
-            // Calculate total delay as the sum of RC delay, slew rate, and component delays
-            double total_delay = (rc_delay + slew)*10e9 + neighbor_cell_delay;
+            double total_delay = (rc_delay + slew) * 10e9 + neighbor_cell_delay;
+            double old_arrival;
+            double new_arrival;
+#pragma omp critical
+            {
+                old_arrival = arrival_time[neighbor];
+                new_arrival = arrival_time[current] + total_delay;
 
-            double old_arrival = arrival_time[neighbor];
-            double new_arrival = arrival_time[current] + total_delay;
-
-            // Update the neighbor's arrival time with the maximum of the old or new arrival time
-            arrival_time[neighbor] = std::max(old_arrival, new_arrival);
-
-            std::cout << "Updating arrival time for cell " << neighbor
-                      << ": max(" << old_arrival << ", "
-                      << arrival_time[current] << " + " << total_delay
-                      << ") = " << arrival_time[neighbor] << std::endl;
+                // Update the neighbor's arrival time with the maximum of the old or new arrival time
+                arrival_time[neighbor] = std::max(old_arrival, new_arrival);
+                if (verbose)
+                    std::cout << "Updating arrival time for cell " << neighbor
+                              << ": max(" << old_arrival << ", "
+                              << arrival_time[current] << " + " << total_delay
+                              << ") = " << arrival_time[neighbor] << std::endl;
+            }
             return;
         }
     }
@@ -417,8 +430,8 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
     std::cerr << "Warning: No delay/slew entry found for edge " << current << " -> " << neighbor << std::endl;
 }
 
-
-double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,double rc_delay) {
+double DAG::computeSlewRate(const Cell &current_cell, const Cell &neighbor_cell, double rc_delay)
+{
     // Assuming voltage swing (V) is a constant value, e.g., 1V (you can adjust this value)
     double voltage_swing = 1.0; // V
 
@@ -428,28 +441,30 @@ double DAG::computeSlewRate(const Cell& current_cell, const Cell& neighbor_cell,
     double slew_time = voltage_swing / slew_rate; // (V / (V/s)) = seconds
 
     // Print Slew Rate
-    std::cout << "Computing Slew Rate: "
-              << "Resistance of current cell = " << current_cell.resistance
-              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-              << " => Slew Rate = " << slew_rate << " V/s" << std::endl;
+    if (verbose)
+        std::cout << "Computing Slew Rate: "
+                  << "Resistance of current cell = " << current_cell.resistance
+                  << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+                  << " => Slew Rate = " << slew_rate << " V/s" << std::endl;
 
     return slew_time;
 }
 
 // Function to compute RC delay between two cells
-double DAG:: computeRCDelay(const Cell& current_cell, const Cell& neighbor_cell) {
+double DAG::computeRCDelay(const Cell &current_cell, const Cell &neighbor_cell)
+{
     // Calculate RC delay based on the resistance and capacitance of both cells
     double rc_delay = current_cell.resistance * neighbor_cell.capacitance;
 
     // Print RC delay
-    std::cout << "Computing RC Delay: "
-              << "Resistance of current cell = " << current_cell.id
-              << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
-              << " => RC Delay = " << rc_delay << std::endl;
+    if (verbose)
+        std::cout << "Computing RC Delay: "
+                  << "Resistance of current cell = " << current_cell.id
+                  << ", Capacitance of neighbor cell = " << neighbor_cell.capacitance
+                  << " => RC Delay = " << rc_delay << std::endl;
 
     return rc_delay;
 }
-
 
 void DAG::reverseList()
 {
@@ -687,87 +702,85 @@ std::unordered_map<int, float> DAG::calculateSlack(const ASIC &asic, const std::
     return slack;
 }
 
-std::unordered_map<int, float> DAG::getSlack()
+std::unordered_map<int, float> DAG::analyzeTiming(const ASIC &asic, const std::map<int, Cell> &cell_map, std::vector<int> &sorted)
 {
-<<<<<<< Updated upstream
-=======
-    return slack;
-}
-
-
-
-
-
-std::unordered_map<int, float> DAG::analyzeTiming(const ASIC& asic, const std::map<int, Cell>& cell_map, std::vector<int> &sorted) {
->>>>>>> Stashed changes
     std::unordered_map<int, int> required_time;
     std::unordered_map<int, float> slack;
 
     reverseList();
 
-    if (verbose) {
+    if (verbose)
+    {
         std::cout << "\n=== Step 1: Initializing required times at outputs ===\n";
     }
-    
-    for (int output : asic.outputs) {
+
+    for (int output : asic.outputs)
+    {
         required_time[output] = CLOCK_PERIOD - SETUP_TIME;
         std::string name = asic.net_dict.count(output) ? asic.net_dict.at(output) : "Unknown";
 
-        if (verbose) {
+        if (verbose)
+        {
             std::cout << "Output net " << name << " (ID: " << output << ") → Required time = "
-                  << required_time[output] << "\n";
-        }        
+                      << required_time[output] << "\n";
+        }
     }
 
-    if (verbose) {
+    if (verbose)
+    {
         std::cout << "\n=== Step 2: Propagating required times (backward) ===\n";
     }
-    for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+    for (auto it = sorted.rbegin(); it != sorted.rend(); ++it)
+    {
         int current = *it;
 
-<<<<<<< Updated upstream
         if (required_time.find(current) == required_time.end())
         {
             required_time[current] = INT32_MAX;
-=======
-        if (required_time.find(current) == required_time.end()) {
-            required_time[current] = INT64_MAX;
->>>>>>> Stashed changes
         }
 
-        if (reverseAdjList.count(current)) {
-            for (int fanin : reverseAdjList[current]) {
+        if (reverseAdjList.count(current))
+        {
+            for (int fanin : reverseAdjList[current])
+            {
                 float cell_delay = 0.0f;
 
                 // delay from cell driving `current`
-                if (cell_map.count(current)) {
+                if (cell_map.count(current))
+                {
                     cell_delay = cell_map.at(current).delay;
                 }
 
                 int candidate_time = required_time[current] - cell_delay;
 
-                if (required_time.find(fanin) == required_time.end()) {
+                if (required_time.find(fanin) == required_time.end())
+                {
                     required_time[fanin] = candidate_time;
-                } else {
+                }
+                else
+                {
                     required_time[fanin] = std::min(required_time[fanin], candidate_time);
                 }
 
                 std::string fanin_name = asic.net_dict.count(fanin) ? asic.net_dict.at(fanin) : "Unknown";
 
-                if (verbose) {
-                    std::cout << "  Fanin " << fanin_name << " (ID: " << fanin 
-                            << ") → Required time updated to " << required_time[fanin] 
-                            << " (via " << cell_delay << " delay)\n";
+                if (verbose)
+                {
+                    std::cout << "  Fanin " << fanin_name << " (ID: " << fanin
+                              << ") → Required time updated to " << required_time[fanin]
+                              << " (via " << cell_delay << " delay)\n";
                 }
             }
         }
     }
 
-    if (verbose) {
+    if (verbose)
+    {
         std::cout << "\n=== Step 3: Slack Computation ===\n";
     }
-    
-    for (int net : sorted) {
+
+    for (int net : sorted)
+    {
         float at = arrival_time.count(net) ? arrival_time.at(net) : 0.0f;
         float rt = required_time.count(net) ? required_time[net] : CLOCK_PERIOD;
 
@@ -776,25 +789,23 @@ std::unordered_map<int, float> DAG::analyzeTiming(const ASIC& asic, const std::m
 
         std::string net_name = asic.net_dict.count(net) ? asic.net_dict.at(net) : "Unknown";
 
-        if (verbose) {
+        if (verbose)
+        {
             std::cout << "Net " << net_name << " (ID: " << net << ")"
-                  << " | Arrival: " << at
-                  << " | Required: " << rt
-                  << " | Slack: " << s;
-        if (s < 0)
-            std::cout << " VIOLATION!";
-        else if (s == 0)
-            std::cout << " CRITICAL PATH";
+                      << " | Arrival: " << at
+                      << " | Required: " << rt
+                      << " | Slack: " << s;
+            if (s < 0)
+                std::cout << " VIOLATION!";
+            else if (s == 0)
+                std::cout << " CRITICAL PATH";
             std::cout << std::endl;
         }
     }
     return slack;
-<<<<<<< Updated upstream
 }
 
 std::unordered_map<int, float> DAG::getSlack()
 {
     return slack;
-=======
->>>>>>> Stashed changes
 }

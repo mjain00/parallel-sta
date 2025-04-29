@@ -1,0 +1,15 @@
+Static Timing Analysis
+JSON file successfully parsed.
+
+[Time] Parsing JSON: circuits/json/simple.jsontook: 494 us
+
+[Time] Creating Cell Map: 3 us
+
+[Time] Building DAG: 4 us
+
+DAG Representation of the ASIC:
+
+[Time] Topological Sort (Forward Pass): 21 us
+
+[Time] Analyze Timing (Backward Pass): 12 us
+BYE!
