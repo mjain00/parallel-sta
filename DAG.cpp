@@ -310,7 +310,7 @@ std::vector<int> DAG::topological_TaskGraph(DAG &dag, const std::map<int, Cell> 
             }
         }
 
-#pragma omp parallel
+#pragma omp parallel num_threads(8)
         {
             std::vector<std::string> local_next;
 
@@ -488,7 +488,6 @@ void DAG::propagateBeRequired(const Cell &current_cell, int current_id, int fani
     float required_time_for_current = required_time[current_id];
 
     float required_time_for_fanin = required_time_for_current - current_cell.delay;
-
 #pragma omp critical
     {
         if (required_time.find(fanin_id) == required_time.end())
@@ -591,18 +590,17 @@ void DAG::updateArrivalTime(int current, int neighbor, const std::map<int, Cell>
     double neighbor_cell_delay = cell_map.at(neighbor).delay;
 
     double total_delay = (rc_delay + slew) * 10e9 + neighbor_cell_delay;
+    double old_arrival = 0.0;
+    double new_arrival = 0.0;
 #pragma omp critical
     {
         if (arrival_time.find(neighbor) == arrival_time.end())
         {
             arrival_time[neighbor] = 0;
         }
-    }
-    double old_arrival = arrival_time[neighbor];
-    double new_arrival = arrival_time[current] + total_delay;
 
-#pragma omp critical
-    {
+        old_arrival = arrival_time[neighbor];
+        new_arrival = arrival_time[current] + total_delay;
         arrival_time[neighbor] = std::max(old_arrival, new_arrival);
         if (verbose)
         {
