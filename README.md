@@ -152,4 +152,13 @@ The node parallelism implementation ends up performing better than the task loop
 
 The task loop implementation incurs a lot of overhead due to creating 3 tasks for each node, dynamically assigning tasks to threads, scheduling decisions, and barriers at every level.
 
+## Running the program:
 
+- Run `make`
+- `./sta.o [-v|--verbose] <filename>`
+
+The main branch has the code for Task Graph Parallelism with backpropagation. 
+
+The code for Task Loop Parallelism is on the "pipeline" branch.
+
+The code for the Node Parallelism is on the "nodes" branch.
